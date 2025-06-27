@@ -1,0 +1,18 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 50px));
+    padding: var(--padding-s);
+    gap: 15px;
+}
+
+.grid-item {
+    text-align: center;
+    padding: var(--padding-s);
+}
+
+/* ANTES: .grid div img */
+.grid-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}

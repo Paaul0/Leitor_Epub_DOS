@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="2header.css">
+    <link rel="stylesheet" href="2variaveis.css">
+    <link rel="stylesheet" href="2body.css">
+    <title>E-pub</title>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav" aria-label="navegação principal">
+            <ul class="search_library">
+                <li class="text">
+                    <form class="nav_form">
+                        <input type="text" id="localizacao" class="nav_input" placeholder="Pesquisar nas Edições...">
+                    </form>
+                </li>
+                <li class="nav_icons">
+                    <div class="dropdown">
+                        <button class="dropdown-btn" aria-label="Abrir opções de edições">
+                            <img src="./icons/arrow_drop_down.svg" alt="Opções de Edições">
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#">Data - Mais recente</a>
+                            <a href="#">Data - Mais Antiga</a>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="dropdown-btn" aria-label="Abrir Menu">
+                            <img src="./icons/menu2.svg" alt="Menu" />
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#">Meu Perfil</a>
+                            <a href="#">Configurações</a>
+                            <a href="#">Sair</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+   <div class="biblioteca">
+        <div id="estanteDeLivros" class="grid">
+            </div>
+    </div>
+    <script src="dropdown.js"></script>
+    <script src="biblioteca.js"></script> 
+</body>
+
+</html>

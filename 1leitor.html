@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitor de Livros</title>
+    <style>
+        /* Estilos básicos para o leitor */
+        body { margin: 0; font-family: sans-serif; }
+        .container-leitor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 15px;
+        }
+        #leitor {
+            width: 90%;
+            height: 80vh;
+            max-width: 800px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .navegacao button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+        }
+        .navegacao button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-leitor">
+        <div id="leitor"></div>
+        <div class="navegacao">
+            <button id="anterior">Anterior</button>
+            <button id="proximo">Próximo</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+    <script>
+        // Pega o nome do livro a partir do parâmetro na URL
+        const parametros = new URLSearchParams(window.location.search);
+        const caminhoDoLivro = parametros.get('livro'); // Ex: 'epubs/moby-dick.epub'
+
+        if (caminhoDoLivro) {
+            var livro = ePub(caminhoDoLivro);
+            var rendicao = livro.renderTo("leitor", { 
+                width: "100%", 
+                height: "100%" 
+            });
+            rendicao.display();
+
+            // Adiciona funcionalidade aos botões
+            document.getElementById("anterior").addEventListener("click", () => rendicao.prev());
+            document.getElementById("proximo").addEventListener("click", () => rendicao.next());
+
+        } else {
+            // Caso alguém acesse a página sem escolher um livro
+            document.getElementById("leitor").innerText = "Nenhum livro selecionado. Por favor, volte para a seleção.";
+            document.querySelector(".navegacao").style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
