@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         {
             titulo: "Um Outro Livro",
-            arquivo: "epubs/outro-livro.epub",
-            capa: "caminho/para/outra-capa.jpg" // Lembre-se de trocar este caminho
+            arquivo: "Epubs/Edicao-141.epub",
+            capa: "./icons/dos.png" // Lembre-se de trocar este caminho
         },
 
         {
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Cria o link <a>
             const linkLivro = document.createElement('a');
-            linkLivro.href = `1leitor.html?livro=${livro.arquivo}`;
+            linkLivro.href = `leitorc.html?livro=${livro.arquivo}`;
 
             // Cria a imagem <img>
             const imgCapa = document.createElement('img');

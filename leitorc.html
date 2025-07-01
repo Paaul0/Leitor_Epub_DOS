@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="leitorc.css">
+    <title>Leitor</title>
+</head>
+
+<body>
+    <header class="titulo">
+        <p>Carregando livro...</p>
+    </header>
+
+    <side class="infos">
+        <div class="home">
+            <button class="btn">
+                <img src="./icons/home.svg">
+            </button>
+
+            <div class="conf">
+                <button class="btn">
+                    <img src="./icons/search.svg">
+                </button>
+                <button class="btn">
+                    <img src="./icons/menu2.svg">
+                </button>
+            </div>
+        </div>
+        <div class="info_liv">
+            <p>oi</p>
+        </div>
+    </side>
+
+    <aside class="toc">
+        <div id="sumario-container"></div>
+    </aside>
+
+    <main class="leitor">
+        <div id="leitor"></div>
+    </main>
+
+    <footer class="progresso">
+        <div class="navegacao">
+            <button id="anterior">Anterior</button>
+            <span id="progresso-info"></span>
+            <button id="proximo">Próximo</button>
+        </div>
+    </footer>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+
+    <script>
+        const parametros = new URLSearchParams(window.location.search);
+        const caminhoDoLivro = parametros.get('livro');
+
+        const tituloEl = document.querySelector('.titulo p');
+        const leitorEl = document.getElementById('leitor');
+        const sumarioContainer = document.getElementById('sumario-container');
+        const progressoInfo = document.getElementById('progresso-info');
+        const navContainer = document.querySelector('.navegacao');
+        const btnAnterior = document.getElementById("anterior");
+        const btnProximo = document.getElementById("proximo");
+
+
+        if (caminhoDoLivro) {
+            const livro = ePub(caminhoDoLivro);
+            const rendicao = livro.renderTo("leitor", {
+                width: "100%",
+                height: "100%",
+                spread: "none" // Garante que veremos uma página por vez
+            });
+
+            rendicao.display();
+
+            // Depois que o livro estiver pronto, pegamos os metadados
+            livro.ready.then(() => {
+                // ATUALIZA O TÍTULO NA PÁGINA
+                const { title } = livro.packaging.metadata;
+                tituloEl.textContent = title;
+                document.title = title; // Atualiza o título da aba do navegador
+
+                // GERA O SUMÁRIO (TOC)
+                const toc = livro.navigation.toc;
+                const sumarioHtml = document.createElement('ul');
+
+                toc.forEach(item => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.textContent = item.label.trim();
+                    a.href = item.href;
+                    li.appendChild(a);
+                    sumarioHtml.appendChild(li);
+
+                    // Faz o link do sumário navegar no livro
+                    a.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        rendicao.display(item.href);
+                    });
+                });
+                sumarioContainer.appendChild(sumarioHtml);
+            });
+
+            // ATUALIZA A BARRA DE PROGRESSO
+            livro.locations.generate(1600).then(() => {
+                rendicao.on("relocated", (location) => {
+                    const percent = livro.locations.percentageFromCfi(location.start.cfi);
+                    const percentFormatado = Math.floor(percent * 100);
+                    progressoInfo.textContent = `${percentFormatado}%`;
+                });
+            });
+
+            // FUNCIONALIDADE DOS BOTÕES
+            btnAnterior.addEventListener("click", () => rendicao.prev());
+            btnProximo.addEventListener("click", () => rendicao.next());
+
+        } else {
+            tituloEl.textContent = "Erro";
+            leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3><p>Por favor, volte para a seleção e escolha um livro para ler.</p>";
+            navContainer.style.display = 'none'; // Esconde os botões
+            sumarioContainer.style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
