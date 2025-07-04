@@ -11,6 +11,11 @@ body {
     font-family: sans-serif;
 }
 
+header{
+    display: flex;
+    justify-content: center;
+}
+
 .cabecalho {
     grid-area: header;
     background-color: #f2f2f2;
@@ -47,6 +52,7 @@ body {
     border: none;
     padding: 0;
     width: 40px;
+    height: 35px;
 }
 
 .btn:hover{
@@ -144,3 +150,30 @@ body {
     background-color: #E0E0E0;
     border-radius: 10px;
 }
+
+/* ESTILOS PARA O MENU DE CONTEXTO - INÍCIO */
+#context-menu {
+  position: absolute; /* Essencial para posicionar perto da seleção */
+  display: none;      /* Começa escondido */
+  background-color: #333;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  padding: 5px;
+  z-index: 10000; /* Garante que fique sobre todo o conteúdo */
+}
+
+#context-menu button {
+  background-color: #555;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#context-menu button:hover {
+  background-color: #1a3f8b;
+}
+/* ESTILOS PARA O MENU DE CONTEXTO - FIM */

@@ -14,6 +14,7 @@
     <header class="header">
         <nav class="nav" aria-label="navegação principal">
             <ul class="search_library">
+                <li class="logo"><img src="icons/logo.png"></li>
                 <li class="text">
                     <form class="nav_form">
                         <input type="text" id="localizacao" class="nav_input" placeholder="Pesquisar nas Edições...">
@@ -22,7 +23,7 @@
                 <li class="nav_icons">
                     <div class="dropdown">
                         <button class="dropdown-btn" aria-label="Abrir opções de edições">
-                            <img src="./icons/arrow_drop_down.svg" alt="Opções de Edições">
+                            <img src="./icons/monitoring.svg" alt="Opções de Edições">
                         </button>
                         <div class="dropdown-content">
                             <a href="#">Data - Mais recente</a>
@@ -31,24 +32,26 @@
                     </div>
                     <div class="dropdown">
                         <button class="dropdown-btn" aria-label="Abrir Menu">
-                            <img src="./icons/menu2.svg" alt="Menu" />
+                            <img src="./icons/arrow_drop_down.svg" alt="Menu" />
                         </button>
                         <div class="dropdown-content">
-                            <a href="#">Meu Perfil</a>
-                            <a href="#">Configurações</a>
-                            <a href="#">Sair</a>
+                            <p>Ordenar ⇅</p>
+                            <a href="#">Data - Mais recente</a>
+                            <a href="#">Data - Mais Antiga</a>
+                            <a href="#">Título - Edição Normal</a>
+                            <a href="#">Título - Edição Extra</a>
                         </div>
                     </div>
                 </li>
             </ul>
         </nav>
     </header>
-   <div class="biblioteca">
+    <div class="biblioteca">
         <div id="estanteDeLivros" class="grid">
-            </div>
+        </div>
     </div>
     <script src="dropdown.js"></script>
-    <script src="biblioteca.js"></script> 
+    <script src="biblioteca.js"></script>
 </body>
 
 </html>
