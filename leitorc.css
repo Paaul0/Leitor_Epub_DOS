@@ -5,13 +5,15 @@ body {
         "aside main"
         "aside footer";
     grid-template-columns: 288px 1fr;
-    grid-template-rows: auto 1fr auto; /* Header e Footer com altura automática */
-    height: 100vh; /* Ocupa a altura total da tela */
+    grid-template-rows: auto 1fr auto;
+    /* Header e Footer com altura automática */
+    height: 100vh;
+    /* Ocupa a altura total da tela */
     margin: 0;
     font-family: sans-serif;
 }
 
-header{
+header {
     display: flex;
     justify-content: center;
 }
@@ -20,8 +22,9 @@ header{
     grid-area: header;
     background-color: #f2f2f2;
 }
-        /* Div infos */
-.infos{
+
+/* Div infos */
+.infos {
     grid-area: side;
     background-color: #F2F2F2;
     border-right: 0px solid #ccc;
@@ -30,32 +33,32 @@ header{
     height: 105px;
 }
 
-.home{
-    display: flex; 
-    justify-content: space-between; 
+.home {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
-.conf{
-    display: flex; 
+.conf {
+    display: flex;
     align-items: center;
     gap: 20px;
-    
+
 }
 
-.info_liv{
+.info_liv {
     width: 50%;
     height: auto;
 }
 
-.btn{
+.btn {
     border: none;
     padding: 0;
     width: 40px;
     height: 35px;
 }
 
-.btn:hover{
+.btn:hover {
     background-color: #C7C7C7;
     border-radius: 8px;
 }
@@ -72,14 +75,15 @@ header{
     width: 8px;
 }
 
-.toc::-webkit-scrollbar-thumb{
-    background: #F2F2F2 ;
+.toc::-webkit-scrollbar-thumb {
+    background: #F2F2F2;
     border-radius: 10px;
 }
 
 .toc::-webkit-scrollbar-thumb {
-  background: #888; /* Cor do polegar */
-  border-radius: 10px;
+    background: #888;
+    /* Cor do polegar */
+    border-radius: 10px;
 }
 
 .leitor {
@@ -151,29 +155,33 @@ header{
     border-radius: 10px;
 }
 
-/* ESTILOS PARA O MENU DE CONTEXTO - INÍCIO */
 #context-menu {
-  position: absolute; /* Essencial para posicionar perto da seleção */
-  display: none;      /* Começa escondido */
-  background-color: #333;
-  border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  padding: 5px;
-  z-index: 10000; /* Garante que fique sobre todo o conteúdo */
+    position: absolute;
+    /* Essencial para o posicionamento funcionar! */
+    display: none;
+    /* Começa escondido */
+    z-index: 1000;
+    /* Garante que o menu fique sobre os outros elementos */
+    background-color: #333;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 #context-menu button {
-  background-color: #555;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 0;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+    background-color: #555;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    margin: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 #context-menu button:hover {
-  background-color: #1a3f8b;
+    background-color: #1a3f8b;
 }
+
 /* ESTILOS PARA O MENU DE CONTEXTO - FIM */

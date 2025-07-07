@@ -49,7 +49,7 @@
         </div>
     </footer>
 
-    <div id="context-menu" >
+    <div id="context-menu">
         <button id="highlight-from-menu"><img src="icons/grifar.svg"></button>
         <button id="Copy"><img src="icons/copy.svg"></button>
         <button id="anotar"><img src="icons/anotar.svg"></button>
@@ -58,124 +58,146 @@
 
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
-    <script>
-        const parametros = new URLSearchParams(window.location.search);
-        const caminhoDoLivro = parametros.get('livro');
+<script>
+    const parametros = new URLSearchParams(window.location.search);
+    const caminhoDoLivro = parametros.get('livro');
 
-        const tituloEl = document.querySelector('.titulo p');
-        const leitorEl = document.getElementById('leitor');
-        const sumarioContainer = document.getElementById('sumario-container');
-        const progressoInfo = document.getElementById('progresso-info');
-        const navContainer = document.querySelector('.navegacao');
-        const btnAnterior = document.getElementById("anterior");
-        const btnProximo = document.getElementById("proximo");
+    const tituloEl = document.querySelector('.titulo p');
+    const leitorEl = document.getElementById('leitor');
+    const sumarioContainer = document.getElementById('sumario-container');
+    const progressoInfo = document.getElementById('progresso-info');
+    const navContainer = document.querySelector('.navegacao');
+    const btnAnterior = document.getElementById("anterior");
+    const btnProximo = document.getElementById("proximo");
 
-        if (caminhoDoLivro) {
-            const livro = ePub(caminhoDoLivro);
-            // Sua variável se chama "rendicao", vamos usá-la
-            const rendicao = livro.renderTo("leitor", {
-                width: "100%",
-                height: "100%",
-                spread: "none"
-            });
+    if (caminhoDoLivro) {
+        const livro = ePub(caminhoDoLivro);
+        const rendicao = livro.renderTo("leitor", {
+            width: "100%",
+            height: "100%",
+            spread: "none"
+        });
 
-            rendicao.display();
+        rendicao.display();
 
-            livro.ready.then(() => {
-                const { title } = livro.packaging.metadata;
-                tituloEl.textContent = title;
-                document.title = title;
-
-                const toc = livro.navigation.toc;
-                const sumarioHtml = document.createElement('ul');
-                toc.forEach(item => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.textContent = item.label.trim();
-                    a.href = item.href;
-                    li.appendChild(a);
-                    sumarioHtml.appendChild(li);
-                    a.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        rendicao.display(item.href);
-                    });
-                });
-                sumarioContainer.appendChild(sumarioHtml);
-            });
-
-            livro.locations.generate(1600).then(() => {
-                rendicao.on("relocated", (location) => {
-                    const percent = livro.locations.percentageFromCfi(location.start.cfi);
-                    const percentFormatado = Math.floor(percent * 100);
-                    progressoInfo.textContent = `${percentFormatado}%`;
+        livro.ready.then(() => {
+            const { title } = livro.packaging.metadata;
+            tituloEl.textContent = title;
+            document.title = title;
+            const toc = livro.navigation.toc;
+            const sumarioHtml = document.createElement('ul');
+            toc.forEach(item => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.textContent = item.label.trim();
+                a.href = item.href;
+                li.appendChild(a);
+                sumarioHtml.appendChild(li);
+                a.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    rendicao.display(item.href);
                 });
             });
+            sumarioContainer.appendChild(sumarioHtml);
+        });
 
-            btnAnterior.addEventListener("click", () => rendicao.prev());
-            btnProximo.addEventListener("click", () => rendicao.next());
-
-            // --- INÍCIO DO CÓDIGO DO MENU DE CONTEXTO ---
-            // NOVO: Cole todo o código do menu aqui dentro
-
-            // 1. Evento para mostrar o menu quando o texto é selecionado
-            rendicao.on("selected", (cfiRange, contents) => {
-                const contextMenu = document.getElementById("context-menu");
-                // ATENÇÃO: O ID do seu contêiner é "leitor", não "viewer"
-                const viewer = document.getElementById("leitor");
-
-                const selection = contents.window.getSelection();
-                if (selection.isCollapsed) {
-                    contextMenu.style.display = "none";
-                    return;
-                }
-
-                const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                const viewerRect = viewer.getBoundingClientRect();
-
-                const scrollTop = window.scrollY || document.documentElement.scrollTop;
-                const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-                const top = rect.top + viewerRect.top + scrollTop - contextMenu.offsetHeight - 5;
-                const left = rect.left + viewerRect.left + scrollLeft + (rect.width - contextMenu.offsetWidth) / 2;
-
-                contextMenu.style.top = `${top}px`;
-                contextMenu.style.left = `${left}px`;
-                contextMenu.style.display = "block";
-
-                contextMenu.dataset.cfi = cfiRange;
+        livro.locations.generate(1600).then(() => {
+            rendicao.on("relocated", (location) => {
+                const percent = livro.locations.percentageFromCfi(location.start.cfi);
+                const percentFormatado = Math.floor(percent * 100);
+                progressoInfo.textContent = `${percentFormatado}%`;
             });
+        });
 
-            // 2. Evento para esconder o menu ao clicar fora
-            document.addEventListener('click', (event) => {
-                const contextMenu = document.getElementById('context-menu');
-                if (contextMenu && !contextMenu.contains(event.target)) {
-                    contextMenu.style.display = 'none';
-                }
-            }, true);
+        btnAnterior.addEventListener("click", () => rendicao.prev());
+        btnProximo.addEventListener("click", () => rendicao.next());
 
-            // 3. Ação do botão "Grifar"
-            document.getElementById("highlight-from-menu").addEventListener("click", () => {
-                const contextMenu = document.getElementById("context-menu");
-                const cfi = contextMenu.dataset.cfi;
-                if (cfi && rendicao) { // Usando a variável "rendicao"
-                    rendicao.annotations.highlight(cfi, {}, () => {}, "highlight", { "fill": "yellow" });
-                }
-                contextMenu.style.display = 'none';
-            });
+        const contextMenu = document.getElementById("context-menu");
 
-            // --- FIM DO CÓDIGO DO MENU DE CONTEXTO ---
+        const hideContextMenu = () => {
+            contextMenu.style.display = 'none';
+        };
+
+        rendicao.on("selected", (cfiRange, contents) => {
+            const selection = contents.window.getSelection();
+            const selectedText = selection.toString().trim();
+
+            if (selectedText.length === 0) {
+                return;
+            }
+
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            const leitorRect = leitorEl.getBoundingClientRect();
+            
+            // --- Cálculo de Posição ---
+            const top = leitorRect.top + rect.top + window.scrollY - contextMenu.offsetHeight - 60;
+            let left = leitorRect.left + rect.left + window.scrollX + (rect.width - contextMenu.offsetWidth) / 2;
+
+            // --- INÍCIO DA LÓGICA DE SEGURANÇA (NOVO) ---
+
+            const viewportWidth = window.innerWidth; // Largura da janela do navegador
+            const menuWidth = contextMenu.offsetWidth;
+
+            // Se o menu estiver saindo pela esquerda (pouco provável, mas bom ter)
+            if (left < 10) {
+                left = 10;
+            }
+
+            // Se o menu estiver saindo pela direita (a causa do seu problema)
+            if (left + menuWidth > viewportWidth) {
+                left = viewportWidth - menuWidth - 10; // Encosta na borda direita com uma margem de 10px
+            }
+            
+            // --- FIM DA LÓGICA DE SEGURANÇA ---
 
 
-        } else {
-            tituloEl.textContent = "Erro";
-            leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3><p>Por favor, volte para a seleção e escolha um livro para ler.</p>";
-            navContainer.style.display = 'none';
-            sumarioContainer.style.display = 'none';
-        }
-    </script>
+            contextMenu.style.top = `${top}px`;
+            contextMenu.style.left = `${left}px`;
+            contextMenu.style.display = "block";
+            contextMenu.dataset.cfi = cfiRange;
+            contextMenu.dataset.selectedText = selectedText;
+        });
+
+        window.addEventListener('click', hideContextMenu);
+        rendicao.hooks.content.register((contents) => {
+            contents.window.addEventListener('click', hideContextMenu);
+        });
+
+        contextMenu.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        document.getElementById("highlight-from-menu").addEventListener("click", () => {
+            const cfi = contextMenu.dataset.cfi;
+            if (cfi) {
+                rendicao.annotations.highlight(cfi, {}, () => {}, "highlight", { "fill": "yellow" });
+            }
+            hideContextMenu();
+        });
+
+        document.getElementById("Copy").addEventListener("click", () => {
+            const textToCopy = contextMenu.dataset.selectedText;
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    console.log("Texto copiado para a área de transferência!");
+                }).catch(err => {
+                    console.error("Erro ao copiar o texto: ", err);
+                });
+            }
+            hideContextMenu();
+        });
+
+    } else {
+        tituloEl.textContent = "Erro";
+        leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3><p>Por favor, volte para a seleção e escolha um livro para ler.</p>";
+        navContainer.style.display = 'none';
+        sumarioContainer.style.display = 'none';
+    }
+</script>
+
 </body>
 
 </html>
