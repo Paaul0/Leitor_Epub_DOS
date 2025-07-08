@@ -6,81 +6,585 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="leitorc.css">
     <title>Leitor</title>
+    <style>
+        /* --- Estilos para a Barra de Pesquisa (MODIFICADO) --- */
+        #search-bar {
+            position: absolute;
+            /* MUDANÇA: de 'fixed' para 'absolute' */
+            background-color: #333;
+            /* Fundo escuro para contraste */
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            /* Sombra mais suave */
+            z-index: 1001;
+            border-radius: 8px;
+            /* Cantos arredondados */
+            /* REMOVIDO: transform, bottom, left, width: 100% */
+            /* ADICIONADO: controle de visibilidade com display */
+            display: none;
+            flex-direction: column;
+            /* Organiza o input e o botão */
+            gap: 10px;
+            width: 280px;
+            /* Largura fixa */
+        }
+
+        #search-bar.visible {
+            display: flex;
+            /* MUDANÇA: Usa flex para mostrar */
+        }
+
+        #search-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #444;
+            color: white;
+        }
+
+        #close-search-btn {
+            padding: 8px 12px;
+            border: none;
+            background-color: #f44336;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            align-self: flex-end;
+            /* Alinha o botão à direita */
+        }
+
+        /* ================================================= */
+        /* CSS PARA O MENU MODAL (CORES ATUALIZADAS)       */
+        /* ================================================= */
+        #menu-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            /* Overlay um pouco mais escuro para contraste */
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #menu-modal.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .menu-modal-content {
+            background-color: #F2F2F2;
+            /* MUDANÇA: Cor de fundo principal */
+            color: #333333;
+            /* MUDANÇA: Cor de texto principal */
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background-color: #E8E8E8;
+            /* MUDANÇA: Fundo do header mais suave */
+            flex-shrink: 0;
+            border-bottom: 1px solid #D1D1D1;
+            /* MUDANÇA: Borda sutil */
+        }
+
+        .menu-header .back-btn {
+            background: none;
+            border: none;
+            color: #333333;
+            /* MUDANÇA: Cor do ícone */
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .menu-header .chapter-title {
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        .menu-header .tool-buttons button {
+            background: none;
+            border: none;
+            color: #333333;
+            /* MUDANÇA: Cor dos ícones */
+            font-size: 22px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        .menu-tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: #E8E8E8;
+            /* MUDANÇA: Fundo das abas */
+            flex-shrink: 0;
+        }
+
+        .menu-tab-btn {
+            background: none;
+            border: none;
+            color: #888888;
+            /* MUDANÇA: Cor da aba inativa */
+            padding: 15px 10px;
+            cursor: pointer;
+            font-size: 16px;
+            flex-grow: 1;
+            border-bottom: 3px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .menu-tab-btn.active {
+            color: #007AFF;
+            /* MUDANÇA: Cor da aba ativa (azul moderno) */
+            border-bottom-color: #007AFF;
+            /* MUDANÇA: Cor da borda ativa */
+        }
+
+        .menu-panels {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .menu-panel {
+            display: none;
+        }
+
+        .menu-panel.active {
+            display: block;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #D1D1D1;
+            /* MUDANÇA: Cor do divisor */
+            padding-bottom: 25px;
+        }
+
+        .setting-group:last-child {
+            border-bottom: none;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #555555;
+            /* MUDANÇA: Cor do label */
+        }
+
+        .font-size-control,
+        .theme-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .font-size-control button {
+            border-radius: 50%;
+            border: 1px solid #CCCCCC;
+            /* MUDANÇA: Borda do botão */
+            background-color: #FFFFFF;
+            /* MUDANÇA: Fundo do botão */
+            color: #333333;
+            /* MUDANÇA: Cor do texto/ícone do botão */
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .font-slider-wrapper {
+            flex-grow: 1;
+            padding: 0 15px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .font-select-control select {
+            width: 100%;
+            padding: 10px;
+            background-color: #FFFFFF;
+            /* MUDANÇA: Fundo do select */
+            color: #333333;
+            /* MUDANÇA: Texto do select */
+            border: 1px solid #CCCCCC;
+            /* MUDANÇA: Borda do select */
+            border-radius: 5px;
+        }
+
+        .theme-control .theme-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .theme-control input[type="radio"] {
+            display: none;
+        }
+
+        .theme-control .theme-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #CCCCCC;
+            /* MUDANÇA: Borda da pré-visualização */
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .theme-preview.light {
+            background-color: #fff;
+        }
+
+        .theme-preview.sepia {
+            background-color: #fbf0d9;
+        }
+
+        .theme-preview.night {
+            background-color: #000;
+        }
+
+        .theme-control input[type="radio"]:checked+.theme-preview {
+            border-color: #007AFF;
+            /* MUDANÇA: Cor da borda quando selecionado */
+        }
+
+        #panel-sumario ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #panel-sumario a {
+            display: block;
+            padding: 15px 10px;
+            color: #333333;
+            /* MUDANÇA: Cor do texto do sumário */
+            text-decoration: none;
+            border-bottom: 1px solid #D1D1D1;
+            /* MUDANÇA: Cor do divisor */
+        }
+
+        #panel-sumario a:hover {
+            background-color: #E8E8E8;
+            /* MUDANÇA: Cor de fundo no hover */
+        }
+
+        /* ================================================= */
+        /* CSS PARA O PAINEL DE NOTAS (NOVO)                 */
+        /* ================================================= */
+        .note-item {
+            border-bottom: 1px solid #D1D1D1;
+            padding: 15px 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-item:hover {
+            background-color: #E8E8E8;
+        }
+
+        .note-item .note-text {
+            font-style: italic;
+            color: #555;
+            margin: 0 0 8px 0;
+            /* Limita o texto para não ficar muito longo */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-item .note-comment {
+            font-size: 1em;
+            color: #333;
+            margin: 0;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
     <header class="titulo">
         <p>Carregando livro...</p>
     </header>
-
     <side class="infos">
         <div class="home">
-            <button class="btn">
-                <img src="./icons/home.svg">
-            </button>
-
+            <a href="1selecao.html" title="Página Inicial"><button class="btn"><img src="./icons/home.svg"></button></a>
             <div class="conf">
-                <button class="btn">
-                    <img src="./icons/search.svg">
-                </button>
-                <button class="btn">
-                    <img src="./icons/menu2.svg">
-                </button>
+                <button class="btn" id="btn-search" title="Pesquisar"><img src="./icons/search.svg"></button>
+                <button class="btn" id="btn-menu" title="Menu"><img src="./icons/menu2.svg"></button>
             </div>
         </div>
         <div class="info_liv">
             <p>oi</p>
         </div>
     </side>
-
     <aside class="toc">
         <div id="sumario-container"></div>
     </aside>
-
     <main class="leitor">
         <div id="leitor"></div>
     </main>
-
     <footer class="progresso">
-        <div class="navegacao">
-            <button id="anterior">Anterior</button>
-            <span id="progresso-info"></span>
-            <button id="proximo">Próximo</button>
-        </div>
+        <div class="navegacao"><button id="anterior">Anterior</button><span id="progresso-info"></span><button
+                id="proximo">Próximo</button></div>
     </footer>
 
-    <div id="context-menu">
-        <button id="highlight-from-menu"><img src="icons/grifar.svg"></button>
-        <button id="Copy"><img src="icons/copy.svg"></button>
-        <button id="anotar"><img src="icons/anotar.svg"></button>
-        <button id="dicionario"><img src="icons/dicionario.svg"></button>
+    <div id="search-bar">
+        <input type="text" id="search-input" placeholder="Pesquisar no livro...">
+        <button id="close-search-btn">X</button>
     </div>
 
+    <div id="menu-modal">
+        <div class="menu-modal-content">
+            <header class="menu-header">
+                <button class="back-btn" id="close-menu-modal-btn">←</button>
+                <span class="chapter-title" id="menu-chapter-title">Título do Capítulo</span>
+                <div class="tool-buttons">
+                    <button>Aa</button>
+                    <button>🔍</button>
+                    <button>🔖</button>
+                </div>
+            </header>
+            <div class="menu-tabs">
+                <button class="menu-tab-btn active" data-target="panel-sumario">Sumário</button>
+                <button class="menu-tab-btn" data-target="panel-exibicao">Exibição</button>
+                <button class="menu-tab-btn" data-target="panel-notas">Notas</button>
+            </div>
+            <div class="menu-panels">
+                <div class="menu-panel active" id="panel-sumario"></div>
+                <div class="menu-panel" id="panel-exibicao">
+                    <div class="setting-group">
+                        <label>Tamanho da Fonte</label>
+                        <div class="font-size-control">
+                            <button id="decrease-font">-</button>
+                            <div class="font-slider-wrapper"><input type="range" id="font-size-slider" min="80"
+                                    max="200" value="100" step="10"></div>
+                            <button id="increase-font">+</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="font-select">Fonte</label>
+                        <div class="font-select-control">
+                            <select id="font-select">
+                                <option value="Original">Original</option>
+                                <option value="Literata">Literata</option>
+                                <option value="Georgia">Georgia</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Tema de Cores</label>
+                        <div class="theme-control">
+                            <label class="theme-option"><input type="radio" name="theme" value="claro" checked>
+                                <div class="theme-preview light"></div>Claro
+                            </label>
+                            <label class="theme-option"><input type="radio" name="theme" value="sepia">
+                                <div class="theme-preview sepia"></div>Sépia
+                            </label>
+                            <label class="theme-option"><input type="radio" name="theme" value="noturno">
+                                <div class="theme-preview night"></div>Noturno
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-panel" id="panel-notas">
+                    <p>Aqui aparecerão suas notas e destaques salvos.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
-<script>
+    <script>
     const parametros = new URLSearchParams(window.location.search);
     const caminhoDoLivro = parametros.get('livro');
 
+    // Seletores de elementos da página principal
     const tituloEl = document.querySelector('.titulo p');
     const leitorEl = document.getElementById('leitor');
     const sumarioContainer = document.getElementById('sumario-container');
     const progressoInfo = document.getElementById('progresso-info');
-    const navContainer = document.querySelector('.navegacao');
     const btnAnterior = document.getElementById("anterior");
     const btnProximo = document.getElementById("proximo");
+    const btnSearch = document.getElementById('btn-search');
+    const searchBar = document.getElementById('search-bar');
+    const closeSearchBtn = document.getElementById('close-search-btn');
+    const btnMenu = document.getElementById('btn-menu');
+
+    // --- NOVO: Array para armazenar as anotações da sessão ---
+    let savedAnnotations = [];
+
+    // Lógica da Barra de Pesquisa
+    btnSearch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rect = btnSearch.getBoundingClientRect();
+        searchBar.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        searchBar.style.left = `${rect.left + window.scrollX - (searchBar.offsetWidth / 2) + (rect.width / 2)}px`;
+        searchBar.classList.toggle('visible');
+        if (searchBar.classList.contains('visible')) {
+            document.getElementById('search-input').focus();
+        }
+    });
+    closeSearchBtn.addEventListener('click', () => searchBar.classList.remove('visible'));
+    document.addEventListener('click', (e) => {
+        if (!searchBar.contains(e.target) && !btnSearch.contains(e.target) && searchBar.classList.contains('visible')) {
+            searchBar.classList.remove('visible');
+        }
+    });
 
     if (caminhoDoLivro) {
         const livro = ePub(caminhoDoLivro);
-        const rendicao = livro.renderTo("leitor", {
-            width: "100%",
-            height: "100%",
-            spread: "none"
+        const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "none" });
+        rendicao.display();
+
+        const menuModal = document.getElementById('menu-modal');
+        const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
+        const menuChapterTitle = document.getElementById('menu-chapter-title');
+        const panelSumario = document.getElementById('panel-sumario');
+
+        rendicao.themes.register("claro", { "body": { "color": "#000", "background-color": "#fff" } });
+        rendicao.themes.register("sepia", { "body": { "color": "#5b4636", "background-color": "#fbf0d9" } });
+        rendicao.themes.register("noturno", { "body": { "color": "#E0E0E0", "background-color": "#121212" } });
+        
+        // --- NOVO: Função para renderizar o painel de notas ---
+        function renderNotesPanel() {
+            const panelNotas = document.getElementById('panel-notas');
+            panelNotas.innerHTML = ''; // Limpa o conteúdo anterior
+
+            if (savedAnnotations.length === 0) {
+                panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação.</p>';
+                return;
+            }
+
+            const notesList = document.createElement('div');
+            savedAnnotations.forEach(annotation => {
+                const noteItem = document.createElement('div');
+                noteItem.className = 'note-item';
+                
+                // O texto que foi grifado/selecionado
+                const noteText = document.createElement('blockquote');
+                noteText.className = 'note-text';
+                noteText.textContent = `"${annotation.text}"`;
+                
+                // O comentário/nota que o usuário adicionou
+                const noteComment = document.createElement('p');
+                noteComment.className = 'note-comment';
+                noteComment.textContent = annotation.note;
+
+                noteItem.appendChild(noteComment);
+                noteItem.appendChild(noteText);
+                
+                // Adiciona o evento de clique para navegar até a anotação
+                noteItem.addEventListener('click', () => {
+                    rendicao.display(annotation.cfi);
+                    menuModal.classList.remove('visible');
+                });
+
+                notesList.appendChild(noteItem);
+            });
+            panelNotas.appendChild(notesList);
+        }
+
+        btnMenu.addEventListener('click', () => {
+            const currentLocation = rendicao.currentLocation();
+            if (currentLocation && currentLocation.start) {
+                const chapter = livro.navigation.get(currentLocation.start.href);
+                menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
+            }
+
+            panelSumario.innerHTML = '';
+            const tocList = document.createElement('ul');
+            livro.navigation.toc.forEach(item => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.textContent = item.label.trim();
+                a.href = item.href;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    rendicao.display(item.href);
+                    menuModal.classList.remove('visible');
+                };
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+            panelSumario.appendChild(tocList);
+            
+            // --- ATUALIZADO: Chama a função para popular o painel de notas sempre que o menu é aberto ---
+            renderNotesPanel();
+
+            menuModal.classList.add('visible');
         });
 
-        rendicao.display();
+        closeMenuModalBtn.addEventListener('click', () => menuModal.classList.remove('visible'));
+        menuModal.addEventListener('click', (event) => {
+            if (event.target === menuModal) { menuModal.classList.remove('visible'); }
+        });
+
+        const tabButtons = document.querySelectorAll('.menu-tab-btn');
+        const tabPanels = document.querySelectorAll('.menu-panel');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanels.forEach(panel => panel.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(button.dataset.target).classList.add('active');
+            });
+        });
+
+        // Controles de exibição (fonte, tema)
+        const decreaseFontBtn = document.getElementById('decrease-font');
+        const increaseFontBtn = document.getElementById('increase-font');
+        const fontSizeSlider = document.getElementById('font-size-slider');
+        const fontSelect = document.getElementById('font-select');
+        const themeRadios = document.querySelectorAll('input[name="theme"]');
+        let currentFontSize = 100;
+        const updateFontSize = () => {
+            fontSizeSlider.value = currentFontSize;
+            rendicao.themes.fontSize(`${currentFontSize}%`);
+        };
+        decreaseFontBtn.addEventListener('click', () => { if (currentFontSize > 80) { currentFontSize -= 10; updateFontSize(); } });
+        increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
+        fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
+        fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Arial" : e.target.value));
+        themeRadios.forEach(radio => radio.addEventListener('click', () => rendicao.themes.select(radio.value)));
 
         livro.ready.then(() => {
             const { title } = livro.packaging.metadata;
@@ -95,10 +599,7 @@
                 a.href = item.href;
                 li.appendChild(a);
                 sumarioHtml.appendChild(li);
-                a.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    rendicao.display(item.href);
-                });
+                a.addEventListener("click", (e) => { e.preventDefault(); rendicao.display(item.href); });
             });
             sumarioContainer.appendChild(sumarioHtml);
         });
@@ -106,98 +607,111 @@
         livro.locations.generate(1600).then(() => {
             rendicao.on("relocated", (location) => {
                 const percent = livro.locations.percentageFromCfi(location.start.cfi);
-                const percentFormatado = Math.floor(percent * 100);
-                progressoInfo.textContent = `${percentFormatado}%`;
+                progressoInfo.textContent = `${Math.floor(percent * 100)}%`;
             });
         });
 
         btnAnterior.addEventListener("click", () => rendicao.prev());
         btnProximo.addEventListener("click", () => rendicao.next());
 
-        const contextMenu = document.getElementById("context-menu");
-
-        const hideContextMenu = () => {
-            contextMenu.style.display = 'none';
-        };
+        let lastMousePosition = { x: 0, y: 0 };
+        rendicao.hooks.content.register((contents) => {
+            contents.window.addEventListener('mousemove', (event) => { lastMousePosition = { x: event.clientX, y: event.clientY }; });
+            contents.window.addEventListener('click', (event) => {
+                const existingMenu = contents.document.getElementById('injected-context-menu');
+                if (existingMenu && !existingMenu.contains(event.target)) { existingMenu.remove(); }
+            });
+        });
 
         rendicao.on("selected", (cfiRange, contents) => {
             const selection = contents.window.getSelection();
             const selectedText = selection.toString().trim();
-
-            if (selectedText.length === 0) {
-                return;
-            }
-
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            const leitorRect = leitorEl.getBoundingClientRect();
+            if (selectedText.length === 0) return;
             
-            // --- Cálculo de Posição ---
-            const top = leitorRect.top + rect.top + window.scrollY - contextMenu.offsetHeight - 60;
-            let left = leitorRect.left + rect.left + window.scrollX + (rect.width - contextMenu.offsetWidth) / 2;
-
-            // --- INÍCIO DA LÓGICA DE SEGURANÇA (NOVO) ---
-
-            const viewportWidth = window.innerWidth; // Largura da janela do navegador
-            const menuWidth = contextMenu.offsetWidth;
-
-            // Se o menu estiver saindo pela esquerda (pouco provável, mas bom ter)
-            if (left < 10) {
-                left = 10;
-            }
-
-            // Se o menu estiver saindo pela direita (a causa do seu problema)
-            if (left + menuWidth > viewportWidth) {
-                left = viewportWidth - menuWidth - 10; // Encosta na borda direita com uma margem de 10px
-            }
+            const oldMenu = contents.document.getElementById('injected-context-menu');
+            if (oldMenu) oldMenu.remove();
             
-            // --- FIM DA LÓGICA DE SEGURANÇA ---
+            const menu = contents.document.createElement('div');
+            menu.id = 'injected-context-menu';
+            Object.assign(menu.style, { position: 'absolute', backgroundColor: '#333', border: '1px solid #333', borderRadius: '6px', padding: '6px', boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)', zIndex: '9999', display: 'flex', gap: '3px' });
+            
+            menu.innerHTML = `
+                <button id="highlight-btn-inj" title="Grifar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMzgwLTQwMGg2MHYtMTIwaDE4MGwtNjAtODAgNjAtODBIMzgwdjI4MFpNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoNDAwcTMzIDAgNTYuNSAyMy41VDc2MC03NjB2NjQwTDQ4MC0yNDAgMjAwLTEyMFptODAtMTIyIDIwMC04NiAyMDAgODZ2LTUxOEgyODB2NTE4Wm0wLTUxOGg0MDAtNDAwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+                <button id="copy-btn-inj" title="Copiar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4=" style="width:22px; height:22px; display:block;"></button>
+                <button id="anotar-btn-inj" title="Anotar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoMjQwdjgwSDI4MHY1MThsMjAwLTg2IDIwMCA4NnYtMjc4aDgwdjQwMEw0ODAtMjQwIDIwMC0xMjBabTgwLTY0MGgyNDAtMjQwWm00MDAgMTYwdi04MGgtODB2LTgwaDgwdi04MGg4MHY4MGg4MHY4MGgtODB2ODBoLTgwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+                <button id="dicio-btn-inj" title="Dicionário"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptLTQwLTgydi03OHEtMzMgMC01Ni41LTIzLjVUMzYwLTMyMHYtNDBMMTY4LTU1MnEtMyAxOC01LjUgMzZ0LTIuNSAzNnEwIDEyMSA3OS41IDIxMlQ0NDAtMTYyWm0yNzYtMTAycTQxLTQ1IDYyLjUtMTAwLjVUODAwLTQ4MHEwLTk4LTU0LjUtMTc5VDYwMC03NzZ2MTZxMCAzMy0yMy41IDU2LjVUNTIwLTY4MGgtODB2ODBxMCAxNy0xMS41IDI4LjVUNDAwLTU2MGgtODB2ODBoMjQwcTE3IDAgMjguNSAxMS41VDYwMC00NDB2MTIwaDQwcTI2IDAgNDcgMTUuNXQyOSA0MC41WiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+                <button id="audio-btn-inj" title="Áudio"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ny41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+            `;
 
+            contents.document.body.appendChild(menu);
+            const buttons = menu.querySelectorAll('button');
+            buttons.forEach(button => {
+                Object.assign(button.style, { backgroundColor: '#555', border: 'none', padding: '10px', margin: '0', borderRadius: '4px', cursor: 'pointer', lineHeight: '0' });
+                button.addEventListener('mouseover', () => { button.style.backgroundColor = '#1a3f8b'; });
+                button.addEventListener('mouseout', () => { button.style.backgroundColor = '#555'; });
+            });
+            const menuHeight = menu.offsetHeight;
+            const menuWidth = menu.offsetWidth;
+            const top = lastMousePosition.y + contents.window.scrollY - menuHeight - 15;
+            let left = lastMousePosition.x + contents.window.scrollX - (menuWidth / 2);
+            if (left < 5) left = 5;
+            if (left + menuWidth > contents.window.innerWidth) left = contents.window.innerWidth - menuWidth - 5;
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+            
+            contents.document.getElementById('highlight-btn-inj').addEventListener('click', () => { 
+                rendicao.annotations.highlight(cfiRange, {}, (e) => {}, "highlight", { "fill": "yellow" }); 
+                menu.remove(); 
+            });
+            
+            contents.document.getElementById('copy-btn-inj').addEventListener('click', () => { 
+                navigator.clipboard.writeText(selectedText); 
+                menu.remove(); 
+            });
+            
+            // --- ATUALIZADO: Funcionalidade Anotar agora também salva a nota ---
+            contents.document.getElementById('anotar-btn-inj').addEventListener('click', () => {
+                const note = prompt("Digite sua anotação para o trecho selecionado:", "");
+                if (note && note.trim() !== "") {
+                    // Salva a anotação no nosso array
+                    savedAnnotations.push({
+                        cfi: cfiRange,
+                        text: selectedText,
+                        note: note.trim()
+                    });
+                    
+                    // Adiciona a marcação visual de sublinhado no livro
+                    rendicao.annotations.underline(cfiRange, {note: note}, (e) => {}, "underline", {"stroke": "blue"});
+                }
+                menu.remove();
+            });
 
-            contextMenu.style.top = `${top}px`;
-            contextMenu.style.left = `${left}px`;
-            contextMenu.style.display = "block";
-            contextMenu.dataset.cfi = cfiRange;
-            contextMenu.dataset.selectedText = selectedText;
-        });
+            contents.document.getElementById('dicio-btn-inj').addEventListener('click', () => { 
+                const dictionaryUrl = `https://www.dicio.com.br/${encodeURIComponent(selectedText.split(' ')[0])}`;
+                window.open(dictionaryUrl, '_blank');
+                menu.remove(); 
+            });
 
-        window.addEventListener('click', hideContextMenu);
-        rendicao.hooks.content.register((contents) => {
-            contents.window.addEventListener('click', hideContextMenu);
-        });
+            contents.document.getElementById('audio-btn-inj').addEventListener('click', () => {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(selectedText);
+                    utterance.lang = 'pt-BR';
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    alert('Seu navegador não suporta a funcionalidade de áudio.');
+                }
+                menu.remove();
+            });
 
-        contextMenu.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
-
-        document.getElementById("highlight-from-menu").addEventListener("click", () => {
-            const cfi = contextMenu.dataset.cfi;
-            if (cfi) {
-                rendicao.annotations.highlight(cfi, {}, () => {}, "highlight", { "fill": "yellow" });
-            }
-            hideContextMenu();
-        });
-
-        document.getElementById("Copy").addEventListener("click", () => {
-            const textToCopy = contextMenu.dataset.selectedText;
-            if (textToCopy) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    console.log("Texto copiado para a área de transferência!");
-                }).catch(err => {
-                    console.error("Erro ao copiar o texto: ", err);
-                });
-            }
-            hideContextMenu();
+            menu.addEventListener('click', (e) => e.stopPropagation());
         });
 
     } else {
         tituloEl.textContent = "Erro";
-        leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3><p>Por favor, volte para a seleção e escolha um livro para ler.</p>";
-        navContainer.style.display = 'none';
-        sumarioContainer.style.display = 'none';
+        leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3>";
     }
 </script>
-
 </body>
 
 </html>
