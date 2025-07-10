@@ -1,55 +1,52 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- SUA LISTA DE LIVROS ---
-    // Agora, para adicionar um novo livro, você só mexe aqui!
-    const livros = [
-        {
-            titulo: "Moby Dick",
-            arquivo: "Epubs/moby-dick.epub",
-            capa: "./icons/28002-515x800.jpg"
-        },
-        {
-            titulo: "Um Outro Livro",
-            arquivo: "Epubs/Edicao-141.epub",
-            capa: "./icons/dos.png" // Lembre-se de trocar este caminho
-        },
-
-        {
-            titulo: "Um Outro Livro",
-            arquivo: "epubs/outro-livro.epub",
-            capa: "caminho/para/outra-capa.jpg" // Lembre-se de trocar este caminho
-        }
-        // Para adicionar um terceiro livro:
-        // ,{
-        //     titulo: "Nome do Terceiro Livro",
-        //     arquivo: "epubs/terceiro-livro.epub",
-        //     capa: "caminho/para/terceira-capa.jpg"
-        // }
+    const caminhosDosLivros = [
+        "Epubs/moby-dick.epub",
+        "Epubs/Edicao-141.epub",
+        "epubs/pg1342.epub"
     ];
 
     const estante = document.getElementById('estanteDeLivros');
 
     if (estante) {
-        livros.forEach(livro => {
-            // Cria a div principal do livro e adiciona a classe para o CSS funcionar
-            const divLivro = document.createElement('div');
-            divLivro.className = 'grid-item'; 
-
-            // Cria o link <a>
-            const linkLivro = document.createElement('a');
-            linkLivro.href = `leitorc.html?livro=${livro.arquivo}`;
-
-            // Cria a imagem <img>
-            const imgCapa = document.createElement('img');
-            imgCapa.src = livro.capa;
-            imgCapa.alt = `Capa do livro ${livro.titulo}`;
-
-            // Monta a estrutura: <img> dentro do <a>, e <a> dentro da <div>
-            linkLivro.appendChild(imgCapa);
-            divLivro.appendChild(linkLivro);
+        caminhosDosLivros.forEach(caminho => {
             
-            // Adiciona o livro montado na estante
-            estante.appendChild(divLivro);
+            // MUDANÇA IMPORTANTE AQUI:
+            // Passamos o objeto JSZip que carregamos no HTML para a Epub.js
+            const livro = ePub(caminho, { JSZip: window.JSZip });
+
+            Promise.all([livro.coverUrl(), livro.loaded.metadata])
+                .then(([urlCapa, meta]) => {
+                
+                    const divLivro = document.createElement('div');
+                    divLivro.className = 'grid-item'; 
+
+                    const linkLivro = document.createElement('a');
+                    linkLivro.href = `leitorc.html?livro=${encodeURIComponent(caminho)}`;
+
+                    if (urlCapa) {
+                        const imgCapa = document.createElement('img');
+                        imgCapa.src = urlCapa;
+                        imgCapa.alt = `Capa do livro ${meta.title}`;
+                        linkLivro.appendChild(imgCapa);
+                    } else {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'placeholder-capa';
+                        placeholder.textContent = meta.title || 'Capa não disponível';
+                        linkLivro.appendChild(placeholder);
+                    }
+
+                    const tituloP = document.createElement('p');
+                    tituloP.className = 'grid-item-titulo';
+                    tituloP.textContent = meta.title || 'Título desconhecido';
+                    linkLivro.appendChild(tituloP);
+                    
+                    divLivro.appendChild(linkLivro);
+                    estante.appendChild(divLivro);
+
+                }).catch(error => {
+                    console.error(`Falha ao carregar o livro: ${caminho}`, error);
+                });
         });
     }
-})
+});
