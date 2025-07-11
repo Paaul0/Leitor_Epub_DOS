@@ -4,8 +4,6 @@ Um leitor de livros digitais em formato EPUB, totalmente funcional no navegador,
 
 Este projeto foi criado para explorar a manipulação de arquivos EPUB no ambiente web e para construir uma experiência de leitura rica e personalizável.
 
-**[Veja a demonstração ao vivo](https://seu-usuario.github.io/seu-repositorio/)** `(substitua este link)`
-
 ---
 
 ## ✨ Funcionalidades Principais
