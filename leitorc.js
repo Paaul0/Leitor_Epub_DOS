@@ -13,6 +13,9 @@ const searchBar = document.getElementById('search-bar');
 const closeSearchBtn = document.getElementById('close-search-btn');
 const btnMenu = document.getElementById('btn-menu');
 
+let currentTheme = 'claro'; // Guarda o nome do tema selecionado
+let currentBookContents = null; // Guarda uma referência para o conteúdo do livro
+
 // --- NOVO: Array para armazenar as anotações da sessão ---
 let savedAnnotations = [];
 
@@ -38,23 +41,6 @@ if (caminhoDoLivro) {
     const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
     const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "auto" });
     rendicao.display();
-
-    // ADICIONE ESTE BLOCO PARA REGISTRAR OS TEMAS UMA ÚNICA VEZ
-    rendicao.themes.register("claro", { "body": { "color": "#000", "background-color": "#fff" } });
-
-    rendicao.themes.register("sepia", {
-        'body': { 'color': '#5b4636', 'background-color': '#fbf0d9' },
-        'p, a, h1, h2, h3, h4, h5, h6': { 'color': '#5b4636 !important' }
-    });
-
-    rendicao.themes.register("noturno", {
-        'body': { 'color': '#E0E0E0', 'background-color': '#121212' },
-        'p, a, h1, h2, h3, h4, h5, h6': { 'color': '#E0E0E0 !important' }
-    });
-
-    // É importante selecionar o tema inicial aqui
-    rendicao.themes.select("claro");
-
 
     const menuModal = document.getElementById('menu-modal');
     const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
@@ -161,10 +147,14 @@ if (caminhoDoLivro) {
     increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
     fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
     fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Arial" : e.target.value));
-    themeRadios.forEach(radio => radio.addEventListener('click', () => {
-        rendicao.themes.select(radio.value);
-    }));
-    
+
+    themeRadios.forEach(radio => {
+        radio.addEventListener('click', () => {
+            currentTheme = radio.value; // Atualiza a variável com o novo tema
+            applyTheme(currentBookContents); // Reaplica o tema imediatamente
+        });
+    });
+
     livro.ready.then(() => {
         const { title } = livro.packaging.metadata;
         tituloEl.textContent = title;
@@ -199,6 +189,9 @@ if (caminhoDoLivro) {
         const style = contents.document.createElement('style');
         style.innerHTML = `p { margin-bottom: 1.5em; }`;
         contents.document.head.appendChild(style);
+
+        currentBookContents = contents;
+        applyTheme(contents);
 
         // O código abaixo já existia, mantenha-o como está
         contents.window.addEventListener('mousemove', (event) => { lastMousePosition = { x: event.clientX, y: event.clientY }; });
@@ -291,6 +284,38 @@ if (caminhoDoLivro) {
 
         menu.addEventListener('click', (e) => e.stopPropagation());
     });
+
+    function applyTheme(contents) {
+        if (!contents) return;
+
+        // Remove o estilo do tema antigo para não acumular
+        const oldStyle = contents.document.getElementById('theme-style');
+        if (oldStyle) {
+            oldStyle.remove();
+        }
+
+        const style = contents.document.createElement('style');
+        style.id = 'theme-style'; // Damos um ID para encontrá-la e removê-la depois
+
+        if (currentTheme === 'sepia') {
+            style.innerHTML = `
+            body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
+            p, a, h1, h2, h3, h4, h5, h6 { color: #5b4636 !important; }
+        `;
+        } else if (currentTheme === 'noturno') {
+            style.innerHTML = `
+            body { background-color: #121212 !important; color: #E0E0E0 !important; }
+            p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
+        `;
+        } else {
+            // Para o tema 'claro', não precisamos de regras extras, pois ao remover o estilo antigo,
+            // ele volta ao padrão.
+            return;
+        }
+
+        contents.document.head.appendChild(style);
+    }
+
 
 } else {
     tituloEl.textContent = "Erro";
