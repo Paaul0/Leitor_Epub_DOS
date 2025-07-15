@@ -12,14 +12,13 @@ const btnSearch = document.getElementById('btn-search');
 const searchBar = document.getElementById('search-bar');
 const closeSearchBtn = document.getElementById('close-search-btn');
 const btnMenu = document.getElementById('btn-menu');
+const infoLivEl = document.querySelector('.info_liv'); 
 
-let currentTheme = 'claro'; // Guarda o nome do tema selecionado
-let currentBookContents = null; // Guarda uma referência para o conteúdo do livro
+let currentTheme = 'claro'; 
+let currentBookContents = null; 
 
-// --- NOVO: Array para armazenar as anotações da sessão ---
 let savedAnnotations = [];
 
-// Lógica da Barra de Pesquisa
 btnSearch.addEventListener('click', (e) => {
     e.stopPropagation();
     const rect = btnSearch.getBoundingClientRect();
@@ -47,10 +46,9 @@ if (caminhoDoLivro) {
     const menuChapterTitle = document.getElementById('menu-chapter-title');
     const panelSumario = document.getElementById('panel-sumario');
 
-    // --- NOVO: Função para renderizar o painel de notas ---
     function renderNotesPanel() {
         const panelNotas = document.getElementById('panel-notas');
-        panelNotas.innerHTML = ''; // Limpa o conteúdo anterior
+        panelNotas.innerHTML = ''; 
 
         if (savedAnnotations.length === 0) {
             panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação.</p>';
@@ -62,12 +60,10 @@ if (caminhoDoLivro) {
             const noteItem = document.createElement('div');
             noteItem.className = 'note-item';
 
-            // O texto que foi grifado/selecionado
             const noteText = document.createElement('blockquote');
             noteText.className = 'note-text';
             noteText.textContent = `"${annotation.text}"`;
 
-            // O comentário/nota que o usuário adicionou
             const noteComment = document.createElement('p');
             noteComment.className = 'note-comment';
             noteComment.textContent = annotation.note;
@@ -75,7 +71,6 @@ if (caminhoDoLivro) {
             noteItem.appendChild(noteComment);
             noteItem.appendChild(noteText);
 
-            // Adiciona o evento de clique para navegar até a anotação
             noteItem.addEventListener('click', () => {
                 rendicao.display(annotation.cfi);
                 menuModal.classList.remove('visible');
@@ -110,7 +105,6 @@ if (caminhoDoLivro) {
         });
         panelSumario.appendChild(tocList);
 
-        // --- ATUALIZADO: Chama a função para popular o painel de notas sempre que o menu é aberto ---
         renderNotesPanel();
 
         menuModal.classList.add('visible');
@@ -132,7 +126,6 @@ if (caminhoDoLivro) {
         });
     });
 
-    // Controles de exibição (fonte, tema)
     const decreaseFontBtn = document.getElementById('decrease-font');
     const increaseFontBtn = document.getElementById('increase-font');
     const fontSizeSlider = document.getElementById('font-size-slider');
@@ -150,15 +143,26 @@ if (caminhoDoLivro) {
 
     themeRadios.forEach(radio => {
         radio.addEventListener('click', () => {
-            currentTheme = radio.value; // Atualiza a variável com o novo tema
-            applyTheme(currentBookContents); // Reaplica o tema imediatamente
+            currentTheme = radio.value; 
+            applyTheme(currentBookContents); 
         });
     });
 
     livro.ready.then(() => {
-        const { title } = livro.packaging.metadata;
-        tituloEl.textContent = title;
-        document.title = title;
+    const { title, creator, pubdate } = livro.packaging.metadata;
+    
+    tituloEl.textContent = title;
+    document.title = title;
+
+    let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
+    if (creator) {
+        infoHtml += `<p class="book-author">Por: ${creator}</p>`;
+    }
+    if (pubdate) {
+        infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
+    }
+    infoLivEl.innerHTML = infoHtml;
+
         const toc = livro.navigation.toc;
         const sumarioHtml = document.createElement('ul');
         toc.forEach(item => {
@@ -185,7 +189,6 @@ if (caminhoDoLivro) {
 
     let lastMousePosition = { x: 0, y: 0 };
     rendicao.hooks.content.register((contents) => {
-        // ADICIONE ESTAS 3 LINHAS ABAIXO
         const style = contents.document.createElement('style');
         style.innerHTML = `p { margin-bottom: 1.5em; }`;
         contents.document.head.appendChild(style);
@@ -193,7 +196,6 @@ if (caminhoDoLivro) {
         currentBookContents = contents;
         applyTheme(contents);
 
-        // O código abaixo já existia, mantenha-o como está
         contents.window.addEventListener('mousemove', (event) => { lastMousePosition = { x: event.clientX, y: event.clientY }; });
         contents.window.addEventListener('click', (event) => {
             const existingMenu = contents.document.getElementById('injected-context-menu');
@@ -230,7 +232,7 @@ if (caminhoDoLivro) {
         });
         const menuHeight = menu.offsetHeight;
         const menuWidth = menu.offsetWidth;
-        const top = lastMousePosition.y + contents.window.scrollY - menuHeight - 15;
+        const top = lastMousePosition.y + contents.window.scrollY - menuHeight - -67;
         let left = lastMousePosition.x + contents.window.scrollX - (menuWidth / 2);
         if (left < 5) left = 5;
         if (left + menuWidth > contents.window.innerWidth) left = contents.window.innerWidth - menuWidth - 5;
@@ -247,18 +249,15 @@ if (caminhoDoLivro) {
             menu.remove();
         });
 
-        // --- ATUALIZADO: Funcionalidade Anotar agora também salva a nota ---
         contents.document.getElementById('anotar-btn-inj').addEventListener('click', () => {
             const note = prompt("Digite sua anotação para o trecho selecionado:", "");
             if (note && note.trim() !== "") {
-                // Salva a anotação no nosso array
                 savedAnnotations.push({
                     cfi: cfiRange,
                     text: selectedText,
                     note: note.trim()
                 });
 
-                // Adiciona a marcação visual de sublinhado no livro
                 rendicao.annotations.underline(cfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
             }
             menu.remove();
@@ -288,14 +287,13 @@ if (caminhoDoLivro) {
     function applyTheme(contents) {
         if (!contents) return;
 
-        // Remove o estilo do tema antigo para não acumular
         const oldStyle = contents.document.getElementById('theme-style');
         if (oldStyle) {
             oldStyle.remove();
         }
 
         const style = contents.document.createElement('style');
-        style.id = 'theme-style'; // Damos um ID para encontrá-la e removê-la depois
+        style.id = 'theme-style'; 
 
         if (currentTheme === 'sepia') {
             style.innerHTML = `
@@ -308,8 +306,6 @@ if (caminhoDoLivro) {
             p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
         `;
         } else {
-            // Para o tema 'claro', não precisamos de regras extras, pois ao remover o estilo antigo,
-            // ele volta ao padrão.
             return;
         }
 
