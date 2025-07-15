@@ -10,12 +10,13 @@ const btnAnterior = document.getElementById("anterior");
 const btnProximo = document.getElementById("proximo");
 const btnSearch = document.getElementById('btn-search');
 const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
 const closeSearchBtn = document.getElementById('close-search-btn');
 const btnMenu = document.getElementById('btn-menu');
-const infoLivEl = document.querySelector('.info_liv'); 
+const infoLivEl = document.querySelector('.info_liv');
 
-let currentTheme = 'claro'; 
-let currentBookContents = null; 
+let currentTheme = 'claro';
+let currentBookContents = null;
 
 let savedAnnotations = [];
 
@@ -26,7 +27,7 @@ btnSearch.addEventListener('click', (e) => {
     searchBar.style.left = `${rect.left + window.scrollX - (searchBar.offsetWidth / 2) + (rect.width / 2)}px`;
     searchBar.classList.toggle('visible');
     if (searchBar.classList.contains('visible')) {
-        document.getElementById('search-input').focus();
+        searchInput.focus();
     }
 });
 closeSearchBtn.addEventListener('click', () => searchBar.classList.remove('visible'));
@@ -41,45 +42,115 @@ if (caminhoDoLivro) {
     const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "auto" });
     rendicao.display();
 
+    const doSearch = (q) => {
+        rendicao.annotations.remove(null, "search-highlight");
+        return Promise.all(
+            livro.spine.spineItems.map(item =>
+                item.load(livro.load.bind(livro))
+                    .then(item.find.bind(item, q))
+                    .finally(item.unload.bind(item))
+            )
+        ).then(results => Promise.resolve([].concat.apply([], results)));
+    };
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query) {
+                doSearch(query).then((results) => {
+                    if (results.length > 0) {
+                        const firstResultCfi = results[0].cfi;
+                        rendicao.display(firstResultCfi).then(() => {
+                            rendicao.annotations.highlight(firstResultCfi, {}, (e) => {
+                                console.error("Erro ao grifar:", e);
+                            }, "search-highlight", {"fill": "orange"});
+                        });
+                    } else {
+                        alert("Nenhum resultado encontrado.");
+                    }
+                });
+            }
+        }
+    });
+    
     const menuModal = document.getElementById('menu-modal');
     const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
     const menuChapterTitle = document.getElementById('menu-chapter-title');
     const panelSumario = document.getElementById('panel-sumario');
 
     function renderNotesPanel() {
-        const panelNotas = document.getElementById('panel-notas');
-        panelNotas.innerHTML = ''; 
+        const panelContainer = document.getElementById('panel-notas');
+        panelContainer.innerHTML = ''; 
 
         if (savedAnnotations.length === 0) {
-            panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação.</p>';
+            panelContainer.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação ou grifo.</p>';
+        } else {
+            const notesList = document.createElement('div');
+            savedAnnotations.forEach(annotation => {
+                const noteItem = document.createElement('div');
+                noteItem.className = 'note-item';
+                const noteText = document.createElement('blockquote');
+                noteText.className = 'note-text';
+                noteText.textContent = `"${annotation.text}"`;
+                noteItem.appendChild(noteText);
+                if(annotation.note) {
+                    const noteComment = document.createElement('p');
+                    noteComment.className = 'note-comment';
+                    noteComment.textContent = annotation.note;
+                    noteItem.appendChild(noteComment);
+                }
+                noteItem.addEventListener('click', () => {
+                    rendicao.display(annotation.cfi);
+                    menuModal.classList.remove('visible');
+                });
+                notesList.appendChild(noteItem);
+            });
+            panelContainer.appendChild(notesList);
+        }
+        
+        const exportButton = document.createElement('button');
+        exportButton.id = 'export-notes-btn';
+        exportButton.textContent = 'Exportar Notas e Grifos';
+        exportButton.style.marginTop = '20px';
+        exportButton.style.padding = '10px';
+        exportButton.style.width = '100%';
+        exportButton.style.cursor = 'pointer';
+        exportButton.onclick = exportNotes;
+        panelContainer.appendChild(exportButton);
+
+        if (savedAnnotations.length === 0) {
+            exportButton.style.display = 'none';
+        }
+    }
+    
+    const exportNotes = () => {
+        if(savedAnnotations.length === 0) {
+            alert("Não há notas ou grifos para exportar.");
             return;
         }
-
-        const notesList = document.createElement('div');
-        savedAnnotations.forEach(annotation => {
-            const noteItem = document.createElement('div');
-            noteItem.className = 'note-item';
-
-            const noteText = document.createElement('blockquote');
-            noteText.className = 'note-text';
-            noteText.textContent = `"${annotation.text}"`;
-
-            const noteComment = document.createElement('p');
-            noteComment.className = 'note-comment';
-            noteComment.textContent = annotation.note;
-
-            noteItem.appendChild(noteComment);
-            noteItem.appendChild(noteText);
-
-            noteItem.addEventListener('click', () => {
-                rendicao.display(annotation.cfi);
-                menuModal.classList.remove('visible');
-            });
-
-            notesList.appendChild(noteItem);
+        const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
+        let markdownContent = `# Notas e Grifos do Livro: ${bookTitle}\n\n`;
+        savedAnnotations.forEach(ann => {
+            if(ann.type === 'highlight') {
+                markdownContent += `## Grifo\n`;
+                markdownContent += `> ${ann.text}\n\n`;
+            } else if (ann.type === 'annotation') {
+                markdownContent += `## Anotação\n`;
+                markdownContent += `> ${ann.text}\n\n`;
+                markdownContent += `**Nota:** ${ann.note}\n\n`;
+            }
+            markdownContent += "---\n\n";
         });
-        panelNotas.appendChild(notesList);
-    }
+        const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     btnMenu.addEventListener('click', () => {
         const currentLocation = rendicao.currentLocation();
@@ -87,7 +158,6 @@ if (caminhoDoLivro) {
             const chapter = livro.navigation.get(currentLocation.start.href);
             menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
         }
-
         panelSumario.innerHTML = '';
         const tocList = document.createElement('ul');
         livro.navigation.toc.forEach(item => {
@@ -104,9 +174,7 @@ if (caminhoDoLivro) {
             tocList.appendChild(li);
         });
         panelSumario.appendChild(tocList);
-
         renderNotesPanel();
-
         menuModal.classList.add('visible');
     });
 
@@ -143,17 +211,15 @@ if (caminhoDoLivro) {
 
     themeRadios.forEach(radio => {
         radio.addEventListener('click', () => {
-            currentTheme = radio.value; 
-            applyTheme(currentBookContents); 
+            currentTheme = radio.value;
+            applyTheme(currentBookContents);
         });
     });
 
     livro.ready.then(() => {
     const { title, creator, pubdate } = livro.packaging.metadata;
-    
     tituloEl.textContent = title;
     document.title = title;
-
     let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
     if (creator) {
         infoHtml += `<p class="book-author">Por: ${creator}</p>`;
@@ -162,7 +228,6 @@ if (caminhoDoLivro) {
         infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
     }
     infoLivEl.innerHTML = infoHtml;
-
         const toc = livro.navigation.toc;
         const sumarioHtml = document.createElement('ul');
         toc.forEach(item => {
@@ -190,17 +255,30 @@ if (caminhoDoLivro) {
     let lastMousePosition = { x: 0, y: 0 };
     rendicao.hooks.content.register((contents) => {
         const style = contents.document.createElement('style');
-        style.innerHTML = `p { margin-bottom: 1.5em; }`;
+        style.innerHTML = `p { margin-bottom: 1.5em; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
-
         currentBookContents = contents;
         applyTheme(contents);
-
+        contents.window.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                rendicao.prev();
+            } else if (event.key === 'ArrowRight') {
+                rendicao.next();
+            }
+        });
         contents.window.addEventListener('mousemove', (event) => { lastMousePosition = { x: event.clientX, y: event.clientY }; });
         contents.window.addEventListener('click', (event) => {
             const existingMenu = contents.document.getElementById('injected-context-menu');
             if (existingMenu && !existingMenu.contains(event.target)) { existingMenu.remove(); }
         });
+    });
+    
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+            rendicao.prev();
+        } else if (event.key === 'ArrowRight') {
+            rendicao.next();
+        }
     });
 
     rendicao.on("selected", (cfiRange, contents) => {
@@ -240,24 +318,44 @@ if (caminhoDoLivro) {
         menu.style.left = `${left}px`;
 
         contents.document.getElementById('highlight-btn-inj').addEventListener('click', () => {
+            savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: null, type: 'highlight' });
             rendicao.annotations.highlight(cfiRange, {}, (e) => { }, "highlight", { "fill": "yellow" });
             menu.remove();
         });
 
+        // --- CORREÇÃO DA FUNÇÃO DE COPIAR ---
         contents.document.getElementById('copy-btn-inj').addEventListener('click', () => {
-            navigator.clipboard.writeText(selectedText);
+            // Usa a API moderna se estiver disponível (HTTPS/Localhost)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(selectedText).then(() => {
+                    // Opcional: mostrar um feedback de sucesso
+                }).catch(err => {
+                    console.error('Falha ao copiar com a API moderna:', err);
+                });
+            } else {
+                // Usa o método antigo como fallback (HTTP/IP)
+                const textArea = contents.document.createElement("textarea");
+                textArea.value = selectedText;
+                textArea.style.position = "fixed";  // Previne "rolagem" da tela
+                textArea.style.top = "-9999px";
+                textArea.style.left = "-9999px";
+                contents.document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    contents.document.execCommand('copy');
+                } catch (err) {
+                    console.error('Falha ao copiar com o método antigo:', err);
+                }
+                contents.document.body.removeChild(textArea);
+            }
             menu.remove();
         });
 
         contents.document.getElementById('anotar-btn-inj').addEventListener('click', () => {
             const note = prompt("Digite sua anotação para o trecho selecionado:", "");
             if (note && note.trim() !== "") {
-                savedAnnotations.push({
-                    cfi: cfiRange,
-                    text: selectedText,
-                    note: note.trim()
-                });
-
+                savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: note.trim(), type: 'annotation' });
                 rendicao.annotations.underline(cfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
             }
             menu.remove();
@@ -286,15 +384,12 @@ if (caminhoDoLivro) {
 
     function applyTheme(contents) {
         if (!contents) return;
-
         const oldStyle = contents.document.getElementById('theme-style');
         if (oldStyle) {
             oldStyle.remove();
         }
-
         const style = contents.document.createElement('style');
-        style.id = 'theme-style'; 
-
+        style.id = 'theme-style';
         if (currentTheme === 'sepia') {
             style.innerHTML = `
             body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
@@ -308,10 +403,8 @@ if (caminhoDoLivro) {
         } else {
             return;
         }
-
         contents.document.head.appendChild(style);
     }
-
 
 } else {
     tituloEl.textContent = "Erro";
