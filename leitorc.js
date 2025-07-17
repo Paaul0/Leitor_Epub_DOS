@@ -17,8 +17,10 @@ const infoLivEl = document.querySelector('.info_liv');
 
 let currentTheme = 'claro';
 let currentBookContents = null;
-
 let savedAnnotations = [];
+
+// --- Variável de controle da seleção ---
+let lastCfiRange = null;
 
 btnSearch.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -72,7 +74,7 @@ if (caminhoDoLivro) {
             }
         }
     });
-    
+
     const menuModal = document.getElementById('menu-modal');
     const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
     const menuChapterTitle = document.getElementById('menu-chapter-title');
@@ -80,7 +82,7 @@ if (caminhoDoLivro) {
 
     function renderNotesPanel() {
         const panelContainer = document.getElementById('panel-notas');
-        panelContainer.innerHTML = ''; 
+        panelContainer.innerHTML = '';
 
         if (savedAnnotations.length === 0) {
             panelContainer.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação ou grifo.</p>';
@@ -107,7 +109,7 @@ if (caminhoDoLivro) {
             });
             panelContainer.appendChild(notesList);
         }
-        
+
         const exportButton = document.createElement('button');
         exportButton.id = 'export-notes-btn';
         exportButton.textContent = 'Exportar Notas e Grifos';
@@ -122,7 +124,7 @@ if (caminhoDoLivro) {
             exportButton.style.display = 'none';
         }
     }
-    
+
     const exportNotes = () => {
         if(savedAnnotations.length === 0) {
             alert("Não há notas ou grifos para exportar.");
@@ -217,17 +219,17 @@ if (caminhoDoLivro) {
     });
 
     livro.ready.then(() => {
-    const { title, creator, pubdate } = livro.packaging.metadata;
-    tituloEl.textContent = title;
-    document.title = title;
-    let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
-    if (creator) {
-        infoHtml += `<p class="book-author">Por: ${creator}</p>`;
-    }
-    if (pubdate) {
-        infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
-    }
-    infoLivEl.innerHTML = infoHtml;
+        const { title, creator, pubdate } = livro.packaging.metadata;
+        tituloEl.textContent = title;
+        document.title = title;
+        let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
+        if (creator) {
+            infoHtml += `<p class="book-author">Por: ${creator}</p>`;
+        }
+        if (pubdate) {
+            infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
+        }
+        infoLivEl.innerHTML = infoHtml;
         const toc = livro.navigation.toc;
         const sumarioHtml = document.createElement('ul');
         toc.forEach(item => {
@@ -253,39 +255,59 @@ if (caminhoDoLivro) {
     btnProximo.addEventListener("click", () => rendicao.next());
 
     let lastMousePosition = { x: 0, y: 0 };
+
+    // ===================================================================
+    // =========== INÍCIO DAS MODIFICAÇÕES NO MENU DE CONTEXTO ===========
+    // ===================================================================
+
+    rendicao.on("selected", (cfiRange) => {
+        lastCfiRange = cfiRange;
+    });
+
     rendicao.hooks.content.register((contents) => {
         const style = contents.document.createElement('style');
         style.innerHTML = `p { margin-bottom: 1.5em; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
         currentBookContents = contents;
         applyTheme(contents);
+
         contents.window.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowLeft') {
-                rendicao.prev();
-            } else if (event.key === 'ArrowRight') {
-                rendicao.next();
+            if (event.key === 'ArrowLeft') rendicao.prev();
+            else if (event.key === 'ArrowRight') rendicao.next();
+        });
+
+        contents.window.addEventListener('mousemove', (event) => {
+            lastMousePosition = { x: event.clientX, y: event.clientY };
+        });
+        
+        contents.window.addEventListener('mousedown', () => {
+            const oldMenu = contents.document.getElementById('injected-context-menu');
+            if (oldMenu) oldMenu.remove();
+        });
+        
+        contents.window.addEventListener('mouseup', (event) => {
+            // Se o clique foi dentro de um menu já existente, não faz nada.
+            if (event.target.closest('#injected-context-menu')) {
+                return;
             }
-        });
-        contents.window.addEventListener('mousemove', (event) => { lastMousePosition = { x: event.clientX, y: event.clientY }; });
-        contents.window.addEventListener('click', (event) => {
-            const existingMenu = contents.document.getElementById('injected-context-menu');
-            if (existingMenu && !existingMenu.contains(event.target)) { existingMenu.remove(); }
+
+            setTimeout(() => {
+                const selection = contents.window.getSelection();
+                const selectedText = selection ? selection.toString().trim() : '';
+                
+                if (selectedText.length > 0 && lastCfiRange) {
+                    showContextMenu(lastCfiRange, selectedText, contents);
+                }
+            }, 10);
         });
     });
-    
+
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowLeft') {
-            rendicao.prev();
-        } else if (event.key === 'ArrowRight') {
-            rendicao.next();
-        }
+        if (event.key === 'ArrowLeft') rendicao.prev();
+        else if (event.key === 'ArrowRight') rendicao.next();
     });
 
-    rendicao.on("selected", (cfiRange, contents) => {
-        const selection = contents.window.getSelection();
-        const selectedText = selection.toString().trim();
-        if (selectedText.length === 0) return;
-
+    function showContextMenu(cfiRange, selectedText, contents) {
         const oldMenu = contents.document.getElementById('injected-context-menu');
         if (oldMenu) oldMenu.remove();
 
@@ -294,12 +316,16 @@ if (caminhoDoLivro) {
         Object.assign(menu.style, { position: 'absolute', backgroundColor: '#333', border: '1px solid #333', borderRadius: '6px', padding: '6px', boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)', zIndex: '9999', display: 'flex', gap: '3px' });
 
         menu.innerHTML = `
-                <button id="highlight-btn-inj" title="Grifar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMzgwLTQwMGg2MHYtMTIwaDE4MGwtNjAtODAgNjAtODBIMzgwdjI4MFpNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoNDAwcTMzIDAgNTYuNSAyMy41VDc2MC03NjB2NjQwTDQ4MC0yNDAgMjAwLTEyMFptODAtMTIyIDIwMC04NiAyMDAgODZ2LTUxOEgyODB2NTE4Wm0wLTUxOGg0MDAtNDAwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-                <button id="copy-btn-inj" title="Copiar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4=" style="width:22px; height:22px; display:block;"></button>
-                <button id="anotar-btn-inj" title="Anotar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoMjQwdjgwSDI4MHY1MThsMjAwLTg2IDIwMCA4NnYtMjc4aDgwdjQwMEw0ODAtMjQwIDIwMC0xMjBabTgwLTY0MGgyNDAtMjQwWm00MDAgMTYwdi04MGgtODB2LTgwaDgwdi04MGg4MHY4MGg4MHY4MGgtODB2ODBoLTgwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-                <button id="dicio-btn-inj" title="Dicionário"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptLTQwLTgydi03OHEtMzMgMC01Ni41LTIzLjVUMzYwLTMyMHYtNDBMMTY4LTU1MnEtMyAxOC01LjUgMzZ0LTIuNSAzNnEwIDEyMSA3OS41IDIxMlQ0NDAtMTYyWm0yNzYtMTAycTQxLTQ1IDYyLjUtMTAwLjVUODAwLTQ4MHEwLTk4LTU0LjUtMTc5VDYwMC03NzZ2MTZxMCAzMy0yMy41IDU2LjVUNTIwLTY4MGgtODB2ODBxMCAxNy0xMS41IDI4LjVUNDAwLTU2MGgtODB2ODBoMjQwcTE3IDAgMjguNSAxMS41VDYwMC00NDB2MTIwaDQwcTI2IDAgNDcgMTUuNXQyOSA0MC41WiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-                <button id="audio-btn-inj" title="Áudio"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ny41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-            `;
+            <button id="highlight-btn-inj" title="Grifar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMzgwLTQwMGg2MHYtMTIwaDE4MGwtNjAtODAgNjAtODBIMzgwdjI4MFpNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoNDAwcTMzIDAgNTYuNSAyMy41VDc2MC03NjB2NjQwTDQ4MC0yNDAgMjAwLTEyMFptODAtMTIyIDIwMC04NiAyMDAgODZ2LTUxOEgyODB2NTE4Wm0wLTUxOGg0MDAtNDAwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+            <button id="copy-btn-inj" title="Copiar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4=" style="width:22px; height:22px; display:block;"></button>
+            <button id="anotar-btn-inj" title="Anotar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoMjQwdjgwSDI4MHY1MThsMjAwLTg2IDIwMCA4NnYtMjc4aDgwdjQwMEw0ODAtMjQwIDIwMC0xMjBabTgwLTY0MGgyNDAtMjQwWm00MDAgMTYwdi04MGgtODB2LTgwaDgwdi04MGg4MHY4MGg4MHY4MGgtODB2ODBoLTgwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+            <button id="dicio-btn-inj" title="Dicionário"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptLTQwLTgydi03OHEtMzMgMC01Ni41LTIzLjVUMzYwLTMyMHYtNDBMMTY4LTU1MnEtMyAxOC01LjUgMzZ0LTIuNSAzNnEwIDEyMSA3OS41IDIxMlQ0NDAtMTYyWm0yNzYtMTAycTQxLTQ1IDYyLjUtMTAwLjVUODAwLTQ4MHEwLTk4LTU0LjUtMTc5VDYwMC03NzZ2MTZxMCAzMy0yMy41IDU2LjVUNTIwLTY4MGgtODB2ODBxMCAxNy0xMS41IDI4LjVUNDAwLTU2MGgtODB2ODBoMjQwcTE3IDAgMjguNSAxMS41VDYwMC00NDB2MTIwaDQwcTI2IDAgNDcgMTUuNXQyOSA0MC41WiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+            <button id="audio-btn-inj" title="Áudio"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1y41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
+        `;
+
+        // Impede que cliques dentro do menu se propaguem para a janela.
+        menu.addEventListener('mousedown', (e) => e.stopPropagation());
+        menu.addEventListener('mouseup', (e) => e.stopPropagation());
 
         contents.document.body.appendChild(menu);
         const buttons = menu.querySelectorAll('button');
@@ -319,24 +345,19 @@ if (caminhoDoLivro) {
 
         contents.document.getElementById('highlight-btn-inj').addEventListener('click', () => {
             savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: null, type: 'highlight' });
-            rendicao.annotations.highlight(cfiRange, {}, (e) => { }, "highlight", { "fill": "yellow" });
+            rendicao.annotations.highlight(cfiRange, {}, (e) => {}, "highlight", { "fill": "yellow" });
             menu.remove();
         });
 
-        // --- CORREÇÃO DA FUNÇÃO DE COPIAR ---
         contents.document.getElementById('copy-btn-inj').addEventListener('click', () => {
-            // Usa a API moderna se estiver disponível (HTTPS/Localhost)
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(selectedText).then(() => {
-                    // Opcional: mostrar um feedback de sucesso
-                }).catch(err => {
+                navigator.clipboard.writeText(selectedText).catch(err => {
                     console.error('Falha ao copiar com a API moderna:', err);
                 });
             } else {
-                // Usa o método antigo como fallback (HTTP/IP)
                 const textArea = contents.document.createElement("textarea");
                 textArea.value = selectedText;
-                textArea.style.position = "fixed";  // Previne "rolagem" da tela
+                textArea.style.position = "fixed";
                 textArea.style.top = "-9999px";
                 textArea.style.left = "-9999px";
                 contents.document.body.appendChild(textArea);
@@ -356,7 +377,7 @@ if (caminhoDoLivro) {
             const note = prompt("Digite sua anotação para o trecho selecionado:", "");
             if (note && note.trim() !== "") {
                 savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: note.trim(), type: 'annotation' });
-                rendicao.annotations.underline(cfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
+                rendicao.annotations.underline(cfiRange, { note: note }, (e) => {}, "underline", { "stroke": "blue" });
             }
             menu.remove();
         });
@@ -374,32 +395,29 @@ if (caminhoDoLivro) {
                 utterance.lang = 'pt-BR';
                 window.speechSynthesis.speak(utterance);
             } else {
-                alert('Seu navegador não suporta a funcionalidade de áudio.');
+                alert('O seu navegador não suporta a funcionalidade de áudio.');
             }
             menu.remove();
         });
-
-        menu.addEventListener('click', (e) => e.stopPropagation());
-    });
+    }
 
     function applyTheme(contents) {
         if (!contents) return;
         const oldStyle = contents.document.getElementById('theme-style');
-        if (oldStyle) {
-            oldStyle.remove();
-        }
+        if (oldStyle) oldStyle.remove();
+        
         const style = contents.document.createElement('style');
         style.id = 'theme-style';
         if (currentTheme === 'sepia') {
             style.innerHTML = `
-            body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
-            p, a, h1, h2, h3, h4, h5, h6 { color: #5b4636 !important; }
-        `;
+                body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
+                p, a, h1, h2, h3, h4, h5, h6 { color: #5b4636 !important; }
+            `;
         } else if (currentTheme === 'noturno') {
             style.innerHTML = `
-            body { background-color: #121212 !important; color: #E0E0E0 !important; }
-            p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
-        `;
+                body { background-color: #121212 !important; color: #E0E0E0 !important; }
+                p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
+            `;
         } else {
             return;
         }
