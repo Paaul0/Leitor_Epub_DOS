@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const caminhosDosLivros = [
         "Epubs/moby-dick.epub",
         "Epubs/Edicao-141.epub",
-        "epubs/pg1342.epub"
+        "Epubs/pg1342.epub",
+        "Epubs/Diario_Oficial_188.epub"
     ];
 
     const estante = document.getElementById('estanteDeLivros');
