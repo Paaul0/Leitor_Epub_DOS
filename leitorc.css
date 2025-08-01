@@ -566,3 +566,15 @@ input[type="range"] {
     color: #555;
 }
 
+.layout-control {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+}
+
+.layout-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}

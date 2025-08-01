@@ -1,6 +1,3 @@
-// ATENÇÃO: Use este código apenas se a Tentativa 1 acima falhar.
-// Este código restaura a busca para a versão original, que é sensível a maiúsculas/minúsculas.
-
 const parametros = new URLSearchParams(window.location.search);
 const caminhoDoLivro = parametros.get('livro');
 
@@ -44,15 +41,16 @@ document.addEventListener('click', (e) => {
 
 if (caminhoDoLivro) {
     const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
-    const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "auto" });
+    // MUDANÇA 1: O padrão agora é 'none' (página única)
+    const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "none" });
 
-    // VERSÃO SIMPLES E ORIGINAL DA BUSCA
+    // VERSÃO SIMPLES E ORIGINAL DA BUSCA (CASE-SENSITIVE)
     const doSearch = (q) => {
         rendicao.annotations.remove(null, "search-highlight");
         return Promise.all(
             livro.spine.spineItems.map(item =>
                 item.load(livro.load.bind(livro))
-                    .then(item.find.bind(item, q)) // Usa a busca padrão do epub.js
+                    .then(item.find.bind(item, q))
                     .finally(item.unload.bind(item))
             )
         ).then(results => Promise.resolve([].concat.apply([], results)));
@@ -78,8 +76,6 @@ if (caminhoDoLivro) {
         }
     });
 
-    // O restante do seu código continua aqui (sem alterações)...
-    // (menuModal, renderNotesPanel, exportNotes, btnMenu, etc.)
     const menuModal = document.getElementById('menu-modal');
     const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
     const menuChapterTitle = document.getElementById('menu-chapter-title');
@@ -222,6 +218,16 @@ if (caminhoDoLivro) {
             applyTheme(currentBookContents);
         });
     });
+
+    // MUDANÇA 2: Adiciona a lógica para os botões de layout
+    const layoutRadios = document.querySelectorAll('input[name="layout"]');
+    layoutRadios.forEach(radio => {
+        radio.addEventListener('click', () => {
+            const newSpread = radio.value;
+            rendicao.spread(newSpread);
+        });
+    });
+
 
     livro.ready.then(() => {
         const { title, creator, pubdate } = livro.packaging.metadata;
