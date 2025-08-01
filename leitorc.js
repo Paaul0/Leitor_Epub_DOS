@@ -1,3 +1,6 @@
+// ATENÇÃO: Use este código apenas se a Tentativa 1 acima falhar.
+// Este código restaura a busca para a versão original, que é sensível a maiúsculas/minúsculas.
+
 const parametros = new URLSearchParams(window.location.search);
 const caminhoDoLivro = parametros.get('livro');
 
@@ -42,14 +45,14 @@ document.addEventListener('click', (e) => {
 if (caminhoDoLivro) {
     const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
     const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "auto" });
-    
 
+    // VERSÃO SIMPLES E ORIGINAL DA BUSCA
     const doSearch = (q) => {
         rendicao.annotations.remove(null, "search-highlight");
         return Promise.all(
             livro.spine.spineItems.map(item =>
                 item.load(livro.load.bind(livro))
-                    .then(item.find.bind(item, q))
+                    .then(item.find.bind(item, q)) // Usa a busca padrão do epub.js
                     .finally(item.unload.bind(item))
             )
         ).then(results => Promise.resolve([].concat.apply([], results)));
@@ -75,6 +78,8 @@ if (caminhoDoLivro) {
         }
     });
 
+    // O restante do seu código continua aqui (sem alterações)...
+    // (menuModal, renderNotesPanel, exportNotes, btnMenu, etc.)
     const menuModal = document.getElementById('menu-modal');
     const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
     const menuChapterTitle = document.getElementById('menu-chapter-title');
@@ -243,30 +248,18 @@ if (caminhoDoLivro) {
         });
         sumarioContainer.appendChild(sumarioHtml);
 
-        // --- INÍCIO DA NOVA LÓGICA DE PROGRESSO HÍBRIDO E IMEDIATO ---
-
         rendicao.on("relocated", (location) => {
             if (location.start && livro.spine.items.length > 0) {
-                // 1. Posição geral baseada no capítulo (ex: capítulo 2 de 10)
                 const chapterIndex = location.start.index;
                 const totalChapters = livro.spine.items.length;
-                
-                // 2. Progresso fino baseado na página DENTRO do capítulo atual (ex: página 3 de 15)
                 const pageInChapter = location.start.displayed.page;
                 const totalPagesInChapter = location.start.displayed.total;
                 const progressWithinChapter = (pageInChapter - 1) / totalPagesInChapter;
-
-                // 3. Combina os dois para uma porcentagem total estimada
-                // Cada capítulo representa uma fatia do livro (1 / total de capítulos)
-                // O progresso total é a soma das fatias dos capítulos anteriores mais a fração da fatia do capítulo atual
                 const totalProgress = (chapterIndex + progressWithinChapter) / totalChapters;
                 const percentage = Math.floor(totalProgress * 100);
-
-                progressoInfo.textContent = ` ${percentage}%`;
+                progressoInfo.textContent = `Progresso: ${percentage}%`;
             }
         });
-        
-        // --- FIM DA NOVA LÓGICA ---
 
         rendicao.display();
     });

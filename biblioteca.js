@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
         "Epubs/Edicao-141.epub",
         "Epubs/pg1342.epub",
         "Epubs/Diario_Oficial_188.epub",
-        "Epubs/Diario_Oficial_189.epub"
+        "Epubs/Diario_Oficial_189.epub",
+        "Epubs/Diario_Oficial_196.epub"
     ];
 
     const estante = document.getElementById('estanteDeLivros');
