@@ -42,7 +42,7 @@ document.addEventListener('click', (e) => {
 if (caminhoDoLivro) {
     const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
     const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "auto" });
-    rendicao.display();
+    
 
     const doSearch = (q) => {
         rendicao.annotations.remove(null, "search-highlight");
@@ -242,23 +242,39 @@ if (caminhoDoLivro) {
             a.addEventListener("click", (e) => { e.preventDefault(); rendicao.display(item.href); });
         });
         sumarioContainer.appendChild(sumarioHtml);
-    });
 
-    livro.locations.generate(1600).then(() => {
+        // --- INÍCIO DA NOVA LÓGICA DE PROGRESSO HÍBRIDO E IMEDIATO ---
+
         rendicao.on("relocated", (location) => {
-            const percent = livro.locations.percentageFromCfi(location.start.cfi);
-            progressoInfo.textContent = `${Math.floor(percent * 100)}%`;
+            if (location.start && livro.spine.items.length > 0) {
+                // 1. Posição geral baseada no capítulo (ex: capítulo 2 de 10)
+                const chapterIndex = location.start.index;
+                const totalChapters = livro.spine.items.length;
+                
+                // 2. Progresso fino baseado na página DENTRO do capítulo atual (ex: página 3 de 15)
+                const pageInChapter = location.start.displayed.page;
+                const totalPagesInChapter = location.start.displayed.total;
+                const progressWithinChapter = (pageInChapter - 1) / totalPagesInChapter;
+
+                // 3. Combina os dois para uma porcentagem total estimada
+                // Cada capítulo representa uma fatia do livro (1 / total de capítulos)
+                // O progresso total é a soma das fatias dos capítulos anteriores mais a fração da fatia do capítulo atual
+                const totalProgress = (chapterIndex + progressWithinChapter) / totalChapters;
+                const percentage = Math.floor(totalProgress * 100);
+
+                progressoInfo.textContent = ` ${percentage}%`;
+            }
         });
+        
+        // --- FIM DA NOVA LÓGICA ---
+
+        rendicao.display();
     });
 
     btnAnterior.addEventListener("click", () => rendicao.prev());
     btnProximo.addEventListener("click", () => rendicao.next());
 
     let lastMousePosition = { x: 0, y: 0 };
-
-    // ===================================================================
-    // =========== INÍCIO DAS MODIFICAÇÕES NO MENU DE CONTEXTO ===========
-    // ===================================================================
 
     rendicao.on("selected", (cfiRange) => {
         lastCfiRange = cfiRange;
@@ -286,7 +302,6 @@ if (caminhoDoLivro) {
         });
         
         contents.window.addEventListener('mouseup', (event) => {
-            // Se o clique foi dentro de um menu já existente, não faz nada.
             if (event.target.closest('#injected-context-menu')) {
                 return;
             }
@@ -323,7 +338,6 @@ if (caminhoDoLivro) {
             <button id="audio-btn-inj" title="Áudio"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ny41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
         `;
 
-        // Impede que cliques dentro do menu se propaguem para a janela.
         menu.addEventListener('mousedown', (e) => e.stopPropagation());
         menu.addEventListener('mouseup', (e) => e.stopPropagation());
 
@@ -415,7 +429,7 @@ if (caminhoDoLivro) {
             `;
         } else if (currentTheme === 'noturno') {
             style.innerHTML = `
-                body { background-color: #121212 !important; color: #E0E0E0 !important; }
+                body { background-color: #383B43 !important; color: #E0E0E0 !important; }
                 p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
             `;
         } else {
