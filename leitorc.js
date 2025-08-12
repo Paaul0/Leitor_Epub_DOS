@@ -126,34 +126,44 @@ if (caminhoDoLivro) {
         }
     }
 
-    const exportNotes = () => {
-        if(savedAnnotations.length === 0) {
-            alert("Não há notas ou grifos para exportar.");
-            return;
+    // CÓDIGO MODIFICADO PARA EXPORTAR EM .TXT
+const exportNotes = () => {
+    if (savedAnnotations.length === 0) {
+        alert("Não há notas ou grifos para exportar.");
+        return;
+    }
+    const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
+    
+    // MUDANÇA 1: Geração de conteúdo em texto plano
+    let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n`;
+    textContent += "========================================\n\n";
+
+    savedAnnotations.forEach(ann => {
+        if (ann.type === 'highlight') {
+            textContent += `Tipo: Grifo\n`;
+            textContent += `Texto: "${ann.text}"\n\n`;
+        } else if (ann.type === 'annotation') {
+            textContent += `Tipo: Anotação\n`;
+            textContent += `Texto: "${ann.text}"\n`;
+            textContent += `Nota: ${ann.note}\n\n`;
         }
-        const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
-        let markdownContent = `# Notas e Grifos do Livro: ${bookTitle}\n\n`;
-        savedAnnotations.forEach(ann => {
-            if(ann.type === 'highlight') {
-                markdownContent += `## Grifo\n`;
-                markdownContent += `> ${ann.text}\n\n`;
-            } else if (ann.type === 'annotation') {
-                markdownContent += `## Anotação\n`;
-                markdownContent += `> ${ann.text}\n\n`;
-                markdownContent += `**Nota:** ${ann.note}\n\n`;
-            }
-            markdownContent += "---\n\n";
-        });
-        const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
+        textContent += "----------------------------------------\n\n";
+    });
+
+    // MUDANÇA 2: Alteração do tipo MIME para texto plano
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // MUDANÇA 3: Alteração da extensão do arquivo para .txt
+    a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
 
     btnMenu.addEventListener('click', () => {
         const currentLocation = rendicao.currentLocation();

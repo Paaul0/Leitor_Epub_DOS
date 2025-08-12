@@ -63,12 +63,60 @@ header {
     border-radius: 8px;
 }
 
+/* AJUSTE NO CONTAINER DO SUMÁRIO PARA USAR FLEXBOX */
 .toc {
     grid-area: aside;
     background-color: #F2F2F2;
     padding: 10px;
     border-right: 0px solid #ccc;
     overflow-y: auto;
+
+    /* --- MUDANÇAS COM FLEXBOX --- */
+    display: flex;
+    flex-direction: column; /* Organiza os filhos em coluna */
+    padding: 0; /* Remove padding para o footer colar na borda */
+}
+
+/* FAZ O SUMÁRIO OCUPAR O ESPAÇO E SER ROLÁVEL */
+#sumario-container {
+    flex-grow: 1; /* Faz este elemento crescer e ocupar o espaço */
+    overflow-y: auto; /* Permite a rolagem apenas do sumário */
+    padding: 10px; /* Adiciona o padding que removemos do pai */
+}
+#sumario-container::-webkit-scrollbar {
+    width: 8px;
+}
+#sumario-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+
+/* ESTILOS PARA A NOVA ÁREA INFERIOR (FOOTER DO SUMÁRIO) */
+.toc-footer {
+    flex-shrink: 0; /* Impede que o footer encolha */
+    height: 65px; /* Altura menor, como solicitado */
+    background-color: #F2F2F2;
+    border-top: 1px solid #ddd;
+    
+    /* Centraliza o botão */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Reutiliza o estilo do botão que já existe, se necessário */
+.toc-footer .btn {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toc-footer .btn img {
+    width: 30px;
+    height: 30px;
 }
 
 .toc::-webkit-scrollbar {
