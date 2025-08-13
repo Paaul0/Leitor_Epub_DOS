@@ -1,6 +1,15 @@
 const parametros = new URLSearchParams(window.location.search);
 const caminhoDoLivro = parametros.get('livro');
 
+const ICON_PLAY = '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iNDhweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSI0OHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzIwLTIwMFYtNzYwbDQ0MCAyODBMMzIwLTIwMFoiLz48L3N2Zz4=" alt="Play">';
+const ICON_STOP = '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iNDhweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSI0OHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzIwLTIwMHYtNTYwaDU2MHY1NjBIMzIwWiIvPjwvc3ZnPg==" alt="Stop">';
+
+// Variáveis para controlar o estado da leitura
+let isReading = false;
+let speechQueue = [];
+let currentSpeechIndex = 0;
+let currentSpeechRate = 1.0;
+
 // Seletores de elementos da página principal
 const tituloEl = document.querySelector('.titulo p');
 const leitorEl = document.getElementById('leitor');
@@ -14,6 +23,9 @@ const searchInput = document.getElementById('search-input');
 const closeSearchBtn = document.getElementById('close-search-btn');
 const btnMenu = document.getElementById('btn-menu');
 const infoLivEl = document.querySelector('.info_liv');
+
+const btnLerLivro = document.getElementById('btn-ler-livro');
+const speechSpeedControl = document.getElementById('speech-speed-control');
 
 let currentTheme = 'claro';
 let currentBookContents = null;
@@ -66,7 +78,7 @@ if (caminhoDoLivro) {
                         rendicao.display(firstResultCfi).then(() => {
                             rendicao.annotations.highlight(firstResultCfi, {}, (e) => {
                                 console.error("Erro ao grifar:", e);
-                            }, "search-highlight", {"fill": "orange"});
+                            }, "search-highlight", { "fill": "orange" });
                         });
                     } else {
                         alert("Nenhum resultado encontrado.");
@@ -96,7 +108,7 @@ if (caminhoDoLivro) {
                 noteText.className = 'note-text';
                 noteText.textContent = `"${annotation.text}"`;
                 noteItem.appendChild(noteText);
-                if(annotation.note) {
+                if (annotation.note) {
                     const noteComment = document.createElement('p');
                     noteComment.className = 'note-comment';
                     noteComment.textContent = annotation.note;
@@ -127,43 +139,43 @@ if (caminhoDoLivro) {
     }
 
     // CÓDIGO MODIFICADO PARA EXPORTAR EM .TXT
-const exportNotes = () => {
-    if (savedAnnotations.length === 0) {
-        alert("Não há notas ou grifos para exportar.");
-        return;
-    }
-    const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
-    
-    // MUDANÇA 1: Geração de conteúdo em texto plano
-    let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n`;
-    textContent += "========================================\n\n";
-
-    savedAnnotations.forEach(ann => {
-        if (ann.type === 'highlight') {
-            textContent += `Tipo: Grifo\n`;
-            textContent += `Texto: "${ann.text}"\n\n`;
-        } else if (ann.type === 'annotation') {
-            textContent += `Tipo: Anotação\n`;
-            textContent += `Texto: "${ann.text}"\n`;
-            textContent += `Nota: ${ann.note}\n\n`;
+    const exportNotes = () => {
+        if (savedAnnotations.length === 0) {
+            alert("Não há notas ou grifos para exportar.");
+            return;
         }
-        textContent += "----------------------------------------\n\n";
-    });
+        const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
 
-    // MUDANÇA 2: Alteração do tipo MIME para texto plano
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    
-    // MUDANÇA 3: Alteração da extensão do arquivo para .txt
-    a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-};
+        // MUDANÇA 1: Geração de conteúdo em texto plano
+        let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n`;
+        textContent += "========================================\n\n";
+
+        savedAnnotations.forEach(ann => {
+            if (ann.type === 'highlight') {
+                textContent += `Tipo: Grifo\n`;
+                textContent += `Texto: "${ann.text}"\n\n`;
+            } else if (ann.type === 'annotation') {
+                textContent += `Tipo: Anotação\n`;
+                textContent += `Texto: "${ann.text}"\n`;
+                textContent += `Nota: ${ann.note}\n\n`;
+            }
+            textContent += "----------------------------------------\n\n";
+        });
+
+        // MUDANÇA 2: Alteração do tipo MIME para texto plano
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // MUDANÇA 3: Alteração da extensão do arquivo para .txt
+        a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     btnMenu.addEventListener('click', () => {
         const currentLocation = rendicao.currentLocation();
@@ -304,12 +316,12 @@ const exportNotes = () => {
         contents.window.addEventListener('mousemove', (event) => {
             lastMousePosition = { x: event.clientX, y: event.clientY };
         });
-        
+
         contents.window.addEventListener('mousedown', () => {
             const oldMenu = contents.document.getElementById('injected-context-menu');
             if (oldMenu) oldMenu.remove();
         });
-        
+
         contents.window.addEventListener('mouseup', (event) => {
             if (event.target.closest('#injected-context-menu')) {
                 return;
@@ -318,7 +330,7 @@ const exportNotes = () => {
             setTimeout(() => {
                 const selection = contents.window.getSelection();
                 const selectedText = selection ? selection.toString().trim() : '';
-                
+
                 if (selectedText.length > 0 && lastCfiRange) {
                     showContextMenu(lastCfiRange, selectedText, contents);
                 }
@@ -368,7 +380,7 @@ const exportNotes = () => {
 
         contents.document.getElementById('highlight-btn-inj').addEventListener('click', () => {
             savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: null, type: 'highlight' });
-            rendicao.annotations.highlight(cfiRange, {}, (e) => {}, "highlight", { "fill": "yellow" });
+            rendicao.annotations.highlight(cfiRange, {}, (e) => { }, "highlight", { "fill": "yellow" });
             menu.remove();
         });
 
@@ -400,7 +412,7 @@ const exportNotes = () => {
             const note = prompt("Digite sua anotação para o trecho selecionado:", "");
             if (note && note.trim() !== "") {
                 savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: note.trim(), type: 'annotation' });
-                rendicao.annotations.underline(cfiRange, { note: note }, (e) => {}, "underline", { "stroke": "blue" });
+                rendicao.annotations.underline(cfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
             }
             menu.remove();
         });
@@ -428,7 +440,7 @@ const exportNotes = () => {
         if (!contents) return;
         const oldStyle = contents.document.getElementById('theme-style');
         if (oldStyle) oldStyle.remove();
-        
+
         const style = contents.document.createElement('style');
         style.id = 'theme-style';
         if (currentTheme === 'sepia') {
@@ -446,6 +458,115 @@ const exportNotes = () => {
         }
         contents.document.head.appendChild(style);
     }
+
+    if (btnLerLivro) {
+        btnLerLivro.innerHTML = ICON_PLAY;
+    }
+
+    // Função que toca o próximo pedaço de texto da fila
+    function playNextChunk() {
+        if (!isReading || currentSpeechIndex >= speechQueue.length) {
+            resetSpeechState();
+            return;
+        }
+        const chunk = speechQueue[currentSpeechIndex];
+        const utterance = new SpeechSynthesisUtterance(chunk);
+        utterance.lang = 'pt-BR';
+        console.log("Aplicando velocidade de leitura:", currentSpeechRate);
+        utterance.rate = currentSpeechRate;
+
+        utterance.onend = () => {
+            currentSpeechIndex++;
+            playNextChunk();
+        };
+        utterance.onerror = (event) => {
+            console.error("Erro na síntese de voz:", event.error);
+            resetSpeechState();
+        };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Função para resetar o estado da leitura
+    function resetSpeechState() {
+        isReading = false;
+        speechQueue = [];
+        currentSpeechIndex = 0;
+        if (btnLerLivro) {
+            btnLerLivro.innerHTML = ICON_PLAY;
+            btnLerLivro.title = "Ler o livro em voz alta";
+        }
+    }
+
+    // A função principal que é chamada pelo clique no botão
+    async function startReadingBook() {
+        if (isReading) {
+            window.speechSynthesis.cancel();
+            resetSpeechState();
+            return;
+        }
+        const originalLocation = rendicao.currentLocation();
+        isReading = true;
+        btnLerLivro.disabled = true;
+        btnLerLivro.innerHTML = '<p style="font-size:10px; text-align:center;">Preparando áudio...</p>';
+
+        try {
+            let fullText = "";
+            const sections = livro.spine.spineItems;
+
+            for (const section of sections) {
+                await rendicao.display(section.href);
+                const contents = rendicao.getContents()[0];
+                if (contents && contents.document && contents.document.body) {
+                    const text = contents.document.body.textContent;
+                    if (text) {
+                        fullText += text.trim() + " \n ";
+                    }
+                }
+            }
+
+            rendicao.display(originalLocation.start.cfi);
+            const cleanedText = fullText.trim();
+
+            if (cleanedText.length > 0) {
+                speechQueue = cleanedText.split(/[\n.]+/).filter(chunk => chunk.trim().length > 0);
+                currentSpeechIndex = 0;
+                if (btnLerLivro) {
+                    btnLerLivro.innerHTML = ICON_STOP;
+                    btnLerLivro.title = "Parar leitura";
+                }
+                playNextChunk();
+            } else {
+                alert("Não foi possível extrair texto do livro com este método.");
+                resetSpeechState();
+            }
+        } catch (error) {
+            console.error("Erro durante a navegação para extração de texto:", error);
+            alert("Ocorreu um erro ao navegar pelo livro para extrair o texto.");
+            resetSpeechState();
+            rendicao.display(originalLocation.start.cfi);
+        } finally {
+            btnLerLivro.disabled = false;
+        }
+    }
+
+    // Adiciona o evento de clique ao botão
+    if (btnLerLivro) {
+        btnLerLivro.addEventListener('click', startReadingBook);
+    }
+
+    if (speechSpeedControl) {
+        // Atualiza a variável de velocidade sempre que o usuário mudar a opção
+        speechSpeedControl.addEventListener('change', (event) => {
+            currentSpeechRate = parseFloat(event.target.value);
+        });
+    }
+
+    // Garante que a fala pare se o usuário fechar a página
+    window.addEventListener('beforeunload', () => {
+        if (isReading) {
+            window.speechSynthesis.cancel();
+        }
+    });
 
 } else {
     tituloEl.textContent = "Erro";

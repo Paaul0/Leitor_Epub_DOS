@@ -67,14 +67,43 @@ header {
 .toc {
     grid-area: aside;
     background-color: #F2F2F2;
-    padding: 10px;
     border-right: 0px solid #ccc;
-    overflow-y: auto;
+    
+    /* --- MUDANÇAS COM GRID LAYOUT --- */
+    display: grid; /* 1. Transforma o container em um Grid */
+    grid-template-rows: 1fr auto; /* 2. Define as linhas: a primeira ocupa todo o espaço (1fr), a segunda tem altura automática */
+    height: 100%; /* Garante que o grid ocupe toda a altura da área 'aside' */
+    padding: 0; /* Removemos o padding para o rodapé colar na borda inferior */
+    overflow: hidden; /* Esconde qualquer overflow do container principal */
+}
 
-    /* --- MUDANÇAS COM FLEXBOX --- */
-    display: flex;
-    flex-direction: column; /* Organiza os filhos em coluna */
-    padding: 0; /* Remove padding para o footer colar na borda */
+/* FAZ O SUMÁRIO OCUPAR O ESPAÇO E SER ROLÁVEL */
+#sumario-container {
+    overflow-y: auto; /* Permite a rolagem apenas desta área */
+    padding: 10px; /* Adiciona o padding que removemos do pai */
+}
+
+#sumario-container::-webkit-scrollbar {
+    width: 8px;
+}
+#sumario-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+
+/* Estilo para o botão e seu ícone */
+.toc-footer .btn {
+    width: 45px;
+    height: 45px;
+    display: flex; /* Usamos flex aqui só para garantir o alinhamento do SVG dentro do botão */
+    align-items: center;
+    justify-content: center;
+}
+
+.toc-footer .btn img {
+    width: 30px;
+    height: 30px;
 }
 
 /* FAZ O SUMÁRIO OCUPAR O ESPAÇO E SER ROLÁVEL */
@@ -94,15 +123,32 @@ header {
 
 /* ESTILOS PARA A NOVA ÁREA INFERIOR (FOOTER DO SUMÁRIO) */
 .toc-footer {
-    flex-shrink: 0; /* Impede que o footer encolha */
-    height: 65px; /* Altura menor, como solicitado */
+    height: 56px; /* Altura menor, como solicitado */
+    justify-content: center;
     background-color: #F2F2F2;
     border-top: 1px solid #ddd;
-    
-    /* Centraliza o botão */
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 15px; 
+    padding: 0 10px;
+    place-items: center;
+}
+
+#speech-speed-control {
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    /* Para um visual mais limpo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right .7em top 50%, 0 0;
+    background-size: .65em auto, 100%;
+    padding-right: 2em; /* Espaço para a seta */
 }
 
 /* Reutiliza o estilo do botão que já existe, se necessário */
