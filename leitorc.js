@@ -302,6 +302,11 @@ if (caminhoDoLivro) {
     });
 
     rendicao.hooks.content.register((contents) => {
+        const fontLink = contents.document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap';
+        contents.document.head.appendChild(fontLink);
+
         const style = contents.document.createElement('style');
         style.innerHTML = `p { margin-bottom: 1.5em; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
