@@ -441,28 +441,91 @@ if (caminhoDoLivro) {
         });
     }
 
-    function applyTheme(contents) {
-        if (!contents) return;
-        const oldStyle = contents.document.getElementById('theme-style');
-        if (oldStyle) oldStyle.remove();
+    // SUBSTITUA a função applyTheme existente em leitorc.js por esta
 
-        const style = contents.document.createElement('style');
-        style.id = 'theme-style';
-        if (currentTheme === 'sepia') {
-            style.innerHTML = `
-                body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
-                p, a, h1, h2, h3, h4, h5, h6 { color: #5b4636 !important; }
-            `;
-        } else if (currentTheme === 'noturno') {
-            style.innerHTML = `
-                body { background-color: #383B43 !important; color: #E0E0E0 !important; }
-                p, a, h1, h2, h3, h4, h5, h6 { color: #E0E0E0 !important; }
-            `;
-        } else {
-            return;
+// SUBSTITUA a função applyTheme pela versão CORRIGIDA abaixo
+
+function applyTheme(contents) {
+    // Seleciona os elementos da interface que devem mudar de cor
+    const header = document.querySelector('.titulo');
+    const footer = document.querySelector('.progresso');
+    const footerButtons = footer.querySelectorAll('button');
+    const footerText = footer.querySelector('#progresso-info');
+
+    // Define as paletas de cores para cada tema
+    const themes = {
+        claro: {
+            bg: '#FFFFFF',
+            text: '#333',
+            border: '#ddd',
+            buttonBg: '#f0f0f0'
+        },
+        sepia: {
+            bg: '#fbf0d9',
+            text: '#5b4636',
+            border: '#e9e0cb',
+            buttonBg: '#f4e8d1'
+        },
+        noturno: {
+            bg: '#383B43',
+            text: '#E0E0E0',
+            border: '#4a4e59',
+            buttonBg: '#4a4e59'
         }
+    };
+
+    const selectedTheme = themes[currentTheme] || themes.claro;
+
+    // Aplica os estilos no header e footer
+    if (header) {
+        header.style.backgroundColor = selectedTheme.bg;
+        header.style.borderColor = selectedTheme.border;
+        if (header.querySelector('p')) {
+            header.querySelector('p').style.color = selectedTheme.text;
+        }
+    }
+    if (footer) {
+        footer.style.backgroundColor = selectedTheme.bg;
+        footer.style.borderColor = selectedTheme.border;
+        if (footerText) footerText.style.color = selectedTheme.text;
+        footerButtons.forEach(button => {
+            button.style.backgroundColor = selectedTheme.buttonBg;
+            // AQUI ESTAVA O ERRO - AGORA CORRIGIDO
+            button.style.color = selectedTheme.text;
+            button.style.borderColor = selectedTheme.border;
+        });
+    }
+
+    // ----- Lógica para o conteúdo do livro (iframe) que havia parado de funcionar -----
+    if (!contents) return;
+    const oldStyle = contents.document.getElementById('theme-style');
+    if (oldStyle) oldStyle.remove();
+
+    const style = contents.document.createElement('style');
+    style.id = 'theme-style';
+
+    // Se o tema for 'claro', apenas removemos o estilo antigo e não adicionamos um novo.
+    // Isso faz com que o leitor volte para o seu fundo branco padrão.
+    if (currentTheme === 'claro') {
+         return;
+    }
+    
+    // Paleta de cores específica para o CONTEÚDO do livro
+    const bookContentTheme = {
+        sepia: { bg: '#fbf0d9', text: '#5b4636' },
+        noturno: { bg: '#383B43', text: '#E0E0E0' }
+    };
+    
+    const selectedBookTheme = bookContentTheme[currentTheme];
+
+    if (selectedBookTheme) {
+        style.innerHTML = `
+            body { background-color: ${selectedBookTheme.bg} !important; color: ${selectedBookTheme.text} !important; }
+            p, a, h1, h2, h3, h4, h5, h6 { color: ${selectedBookTheme.text} !important; }
+        `;
         contents.document.head.appendChild(style);
     }
+}
 
     if (btnLerLivro) {
         btnLerLivro.innerHTML = ICON_PLAY;
