@@ -9,7 +9,20 @@ body {
     height: 100vh;
     margin: 0;
     font-family: sans-serif;
+    transition: grid-template-columns 0.4s ease;
 }
+
+body.sidebar-collapsed {
+    grid-template-columns: 0px 1fr;
+}
+
+body.sidebar-collapsed .sidebar-completa {
+    visibility: hidden;
+    overflow: hidden;
+    padding: 0;
+    border-right: none;
+}
+
 
 .sidebar-completa {
     grid-area: sidebar;
@@ -682,4 +695,35 @@ input[type="range"] {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* ADICIONE ESTE BLOCO NO FINAL DE leitorc.css */
+
+/* Estilo para o novo botão flutuante */
+#btn-show-sidebar {
+    position: fixed; /* Posição fixa na tela */
+    top: 15px;
+    left: 15px;
+    z-index: 2000; /* Garante que ele fique acima de outros elementos */
+
+    display: none; /* ESCONDIDO POR PADRÃO */
+
+    /* Estilos visuais (pode copiar de outros botões) */
+    width: 40px;
+    height: 35px;
+    border: none;
+    padding: 0;
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra para destacar */
+}
+
+#btn-show-sidebar:hover {
+    background-color: #C7C7C7;
+}
+
+/* Regra para MOSTRAR o botão flutuante APENAS quando a sidebar estiver recolhida */
+body.sidebar-collapsed #btn-show-sidebar {
+    display: block;
 }

@@ -23,7 +23,8 @@ const searchInput = document.getElementById('search-input');
 const closeSearchBtn = document.getElementById('close-search-btn');
 const btnMenu = document.getElementById('btn-menu');
 const infoLivEl = document.querySelector('.info_liv');
-
+const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+const btnShowSidebar = document.getElementById('btn-show-sidebar');
 const btnLerLivro = document.getElementById('btn-ler-livro');
 const speechSpeedControl = document.getElementById('speech-speed-control');
 
@@ -463,72 +464,72 @@ if (caminhoDoLivro) {
 
     // SUBSTITUA NOVAMENTE a função applyTheme por esta versão mais robusta
 
-function applyTheme(contents) {
-    // Seleciona todos os elementos da interface que podem mudar de cor
-    const header = document.querySelector('.titulo');
-    const footer = document.querySelector('.progresso');
-    const mainReaderArea = document.querySelector('.leitor');
-    const footerButtons = footer.querySelectorAll('button');
-    const footerText = footer.querySelector('#progresso-info');
+    function applyTheme(contents) {
+        // Seleciona todos os elementos da interface que podem mudar de cor
+        const header = document.querySelector('.titulo');
+        const footer = document.querySelector('.progresso');
+        const mainReaderArea = document.querySelector('.leitor');
+        const footerButtons = footer.querySelectorAll('button');
+        const footerText = footer.querySelector('#progresso-info');
 
-    // Define as paletas de cores para a INTERFACE (header e footer)
-    const uiThemes = {
-        claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
-        sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
-        noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
-    };
-    
-    // Define as paletas de cores para o CONTEÚDO DO LIVRO (área de leitura)
-    const bookThemes = {
-        claro: { bg: '#FFFFFF', text: '#000000' }, // Fundo branco padrão
-        sepia: { bg: '#fbf0d9', text: '#5b4636' },
-        noturno: { bg: '#383B43', text: '#E0E0E0' }
-    };
+        // Define as paletas de cores para a INTERFACE (header e footer)
+        const uiThemes = {
+            claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
+            sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
+            noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
+        };
 
-    // Pega o tema selecionado para a UI e para o Livro
-    const selectedUiTheme = uiThemes[currentTheme];
-    const selectedBookTheme = bookThemes[currentTheme];
+        // Define as paletas de cores para o CONTEÚDO DO LIVRO (área de leitura)
+        const bookThemes = {
+            claro: { bg: '#FFFFFF', text: '#000000' }, // Fundo branco padrão
+            sepia: { bg: '#fbf0d9', text: '#5b4636' },
+            noturno: { bg: '#383B43', text: '#E0E0E0' }
+        };
 
-    // --- 1. Aplica o tema na Interface (Header e Footer) ---
-    if (header) {
-        header.style.backgroundColor = selectedUiTheme.bg;
-        header.style.borderColor = selectedUiTheme.border;
-        if (header.querySelector('p')) {
-            header.querySelector('p').style.color = selectedUiTheme.text;
+        // Pega o tema selecionado para a UI e para o Livro
+        const selectedUiTheme = uiThemes[currentTheme];
+        const selectedBookTheme = bookThemes[currentTheme];
+
+        // --- 1. Aplica o tema na Interface (Header e Footer) ---
+        if (header) {
+            header.style.backgroundColor = selectedUiTheme.bg;
+            header.style.borderColor = selectedUiTheme.border;
+            if (header.querySelector('p')) {
+                header.querySelector('p').style.color = selectedUiTheme.text;
+            }
         }
-    }
-    if (footer) {
-        footer.style.backgroundColor = selectedUiTheme.bg;
-        footer.style.borderColor = selectedUiTheme.border;
-        if (footerText) footerText.style.color = selectedUiTheme.text;
-        footerButtons.forEach(button => {
-            button.style.backgroundColor = selectedUiTheme.buttonBg;
-            button.style.color = selectedUiTheme.text;
-            button.style.borderColor = selectedUiTheme.border;
-        });
-    }
+        if (footer) {
+            footer.style.backgroundColor = selectedUiTheme.bg;
+            footer.style.borderColor = selectedUiTheme.border;
+            if (footerText) footerText.style.color = selectedUiTheme.text;
+            footerButtons.forEach(button => {
+                button.style.backgroundColor = selectedUiTheme.buttonBg;
+                button.style.color = selectedUiTheme.text;
+                button.style.borderColor = selectedUiTheme.border;
+            });
+        }
 
-    // --- 2. Aplica o tema na Área de Leitura (atrás e dentro do iframe) ---
-    if (mainReaderArea) {
-        mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
-    }
+        // --- 2. Aplica o tema na Área de Leitura (atrás e dentro do iframe) ---
+        if (mainReaderArea) {
+            mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
+        }
 
-    if (contents) {
-        const oldStyle = contents.document.getElementById('theme-style');
-        if (oldStyle) oldStyle.remove();
+        if (contents) {
+            const oldStyle = contents.document.getElementById('theme-style');
+            if (oldStyle) oldStyle.remove();
 
-        // Só injeta o CSS se não for o tema claro (que usa o padrão do livro)
-        if (currentTheme !== 'claro') {
-            const style = contents.document.createElement('style');
-            style.id = 'theme-style';
-            style.innerHTML = `
+            // Só injeta o CSS se não for o tema claro (que usa o padrão do livro)
+            if (currentTheme !== 'claro') {
+                const style = contents.document.createElement('style');
+                style.id = 'theme-style';
+                style.innerHTML = `
                 body { background-color: ${selectedBookTheme.bg} !important; color: ${selectedBookTheme.text} !important; }
                 p, a, h1, h2, h3, h4, h5, h6 { color: ${selectedBookTheme.text} !important; }
             `;
-            contents.document.head.appendChild(style);
+                contents.document.head.appendChild(style);
+            }
         }
     }
-}
 
     if (btnLerLivro) {
         btnLerLivro.innerHTML = ICON_PLAY;
@@ -652,6 +653,43 @@ function applyTheme(contents) {
             } else if (ann.type === 'annotation') {
                 rendicao.annotations.underline(ann.cfi, { note: ann.note }, (e) => { }, "underline", { "stroke": "blue" });
             }
+        });
+    }
+
+    // ADICIONE ESTE BLOCO DE CÓDIGO em leitorc.js
+
+    if (btnToggleSidebar) {
+        btnToggleSidebar.addEventListener('click', () => {
+            const body = document.body;
+            const isCollapsed = body.classList.contains('sidebar-collapsed');
+
+            document.body.classList.add('sidebar-collapsed');
+
+            // Atualiza o título do botão para melhor acessibilidade
+            btnToggleSidebar.setAttribute('title', isCollapsed ? 'Ocultar Sumário' : 'Mostrar Sumário');
+
+            // AVISA AO EPUB.JS QUE A ÁREA DE LEITURA MUDOU DE TAMANHO
+            // Isso é crucial para que o texto se ajuste corretamente (reflow)
+            setTimeout(() => {
+                if (rendicao) {
+                    rendicao.resize();
+                }
+            }, 400); // O tempo (400ms) deve ser igual ao da transição do CSS
+        });
+    }
+
+    // ADICIONE ESTE NOVO BLOCO DE CÓDIGO
+    if (btnShowSidebar) {
+        btnShowSidebar.addEventListener('click', () => {
+            // Apenas remove a classe para mostrar o sumário
+            document.body.classList.remove('sidebar-collapsed');
+
+            // Também avisa ao Epub.js para redimensionar o conteúdo
+            setTimeout(() => {
+                if (rendicao) {
+                    rendicao.resize();
+                }
+            }, 400);
         });
     }
 
