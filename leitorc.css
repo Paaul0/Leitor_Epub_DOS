@@ -1,16 +1,23 @@
 body {
     display: grid;
     grid-template-areas:
-        "side header"
-        "aside main"
-        "aside footer";
+        "sidebar header"
+        "sidebar main"
+        "sidebar footer";
     grid-template-columns: 288px 1fr;
     grid-template-rows: auto 1fr auto;
-    /* Header e Footer com altura automática */
     height: 100vh;
-    /* Ocupa a altura total da tela */
     margin: 0;
     font-family: sans-serif;
+}
+
+.sidebar-completa {
+    grid-area: sidebar;
+    background-color: #F2F2F2;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 header {
@@ -21,16 +28,6 @@ header {
 .cabecalho {
     grid-area: header;
     background-color: #f2f2f2;
-}
-
-/* Div infos */
-.infos {
-    grid-area: side;
-    background-color: #F2F2F2;
-    border-right: 0px solid #ccc;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    height: 105px;
 }
 
 .home {
@@ -65,16 +62,11 @@ header {
 
 /* AJUSTE NO CONTAINER DO SUMÁRIO PARA USAR FLEXBOX */
 .toc {
-    grid-area: aside;
-    background-color: #F2F2F2;
-    border-right: 0px solid #ccc;
-    
-    /* --- MUDANÇAS COM GRID LAYOUT --- */
-    display: grid; /* 1. Transforma o container em um Grid */
+   display: grid; /* 1. Transforma o container em um Grid */
     grid-template-rows: 1fr auto; /* 2. Define as linhas: a primeira ocupa todo o espaço (1fr), a segunda tem altura automática */
-    height: 100%; /* Garante que o grid ocupe toda a altura da área 'aside' */
-    padding: 0; /* Removemos o padding para o rodapé colar na borda inferior */
     overflow: hidden; /* Esconde qualquer overflow do container principal */
+    /* Propriedade nova mais importante */
+    flex-grow: 1; /* Faz esta div crescer para ocupar o espaço que sobra na sidebar */
 }
 
 /* FAZ O SUMÁRIO OCUPAR O ESPAÇO E SER ROLÁVEL */
@@ -208,7 +200,7 @@ header {
 }
 
 .navegacao button {
-    padding: 8px 16px;
+    padding: 3px 16px;
     font-size: 16px;
     cursor: pointer;
     border: 1px solid #ccc;
@@ -610,16 +602,12 @@ input[type="range"] {
 }
 
 .infos {
-    grid-area: side;
-    background-color: #F2F2F2;
-    border-right: 0px solid #ccc;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    height: 105px; /* Restauramos a altura original para definir um container */
-
-    /* --- MUDANÇAS COM FLEXBOX --- */
     display: flex;
     flex-direction: column;
+    padding: 10px;
+    height: 105px;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0; 
 }
 
 .home {
@@ -671,4 +659,27 @@ input[type="range"] {
     align-items: center;
     gap: 5px;
     cursor: pointer;
+}
+
+.titulo {
+    grid-area: header; /* Mantém a área do grid que você já definiu */
+    height: 50px;      /* << Defina a altura que desejar. Ex: 50px */
+    padding: 0 15px;   /* Adiciona um espaçamento nas laterais */
+    /* Centraliza o título verticalmente e horizontalmente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Garante que o texto não saia para fora */
+}
+
+.titulo p {
+    margin: 0; /* Remove a margem padrão do parágrafo */
+    font-size: 16px; /* Opcional: ajuste o tamanho da fonte */
+    font-weight: bold;
+    color: #333;
+
+    /* Impede que títulos longos quebrem o layout */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
