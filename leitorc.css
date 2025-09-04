@@ -254,34 +254,88 @@ header {
     border-radius: 10px;
 }
 
-#context-menu {
-    position: absolute;
-    /* Essencial para o posicionamento funcionar! */
-    display: none;
-    /* Começa escondido */
-    z-index: 1000;
-    /* Garante que o menu fique sobre os outros elementos */
-    background-color: #333;
-    border: 1px solid #333;
-    border-radius: 6px;
+
+/* --- ESTILOS PARA O NOVO MENU FIXO (VERSÃO FINAL COM BOTÕES DESTACADOS) --- */
+/* --- ESTILOS PARA O NOVO MENU FIXO (RECOLHÍVEL) --- */
+#fixed-context-menu {
+    position: fixed;
+    top: 60px;
+    right: 15px;
+    z-index: 2000;
+    
+    background-color: #FFFFFF; 
+    border: 1px solid #ddd;
+    border-radius: 8px;
     padding: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    
+    display: flex;
+    align-items: center; /* Alinha o botão de recolher com as ferramentas */
+    transition: opacity 0.2s ease-in-out;
 }
 
-#context-menu button {
-    background-color: #555;
-    color: white;
+/* Estilo para o novo botão de recolher/expandir */
+#btn-toggle-fixed-menu {
+    background-color: transparent;
     border: none;
-    padding: 8px 12px;
-    margin: 0;
-    border-radius: 4px;
+    padding: 8px;
+    margin-right: 4px; /* Espaço entre o botão e as ferramentas */
     cursor: pointer;
-    font-size: 14px;
+    line-height: 0;
+    border-radius: 6px;
 }
 
-#context-menu button:hover {
-    background-color: #1a3f8b;
+#btn-toggle-fixed-menu img {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.3s ease; /* Animação de rotação */
 }
+
+#btn-toggle-fixed-menu:hover {
+    background-color: #eaf2ff;
+}
+
+/* Container que agrupa os botões de ferramentas */
+.menu-tools {
+    display: flex;
+    gap: 4px;
+}
+
+.menu-tools button {
+    background-color: #f9f9f9; 
+    border: 1px solid #ddd; 
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 0;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.menu-tools button:hover {
+    background-color: #eaf2ff;
+    border-color: #a9c7f5;
+}
+
+.menu-tools button img {
+    width: 22px;
+    height: 22px;
+}
+
+/* --- ESTADO RECOLHIDO --- */
+#fixed-context-menu.collapsed .menu-tools {
+    display: none; /* Esconde as ferramentas */
+}
+
+#fixed-context-menu.collapsed #btn-toggle-fixed-menu img {
+    transform: rotate(180deg); /* Gira o ícone para indicar "expandir" */
+}
+
+/* Estado padrão: INATIVO (quando nenhum texto está selecionado) 
+#fixed-context-menu:not(.active) {
+    opacity: 0.5;
+    pointer-events: none;
+}*/
+
 
 /* --- Estilos para a Barra de Pesquisa (MODIFICADO) --- */
 #search-bar {

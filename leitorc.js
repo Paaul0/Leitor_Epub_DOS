@@ -28,12 +28,34 @@ const btnShowSidebar = document.getElementById('btn-show-sidebar');
 const btnLerLivro = document.getElementById('btn-ler-livro');
 const speechSpeedControl = document.getElementById('speech-speed-control');
 
+// --- NOVOS SELETORES E VARIÁVEIS DE CONTROLE ---
+const btnToggleFixedMenu = document.getElementById('btn-toggle-fixed-menu');
+const fixedContextMenu = document.getElementById('fixed-context-menu');
+const btnHighlightFixed = document.getElementById('fixed-highlight-btn');
+const btnCopyFixed = document.getElementById('fixed-copy-btn');
+const btnAnnotateFixed = document.getElementById('fixed-anotar-btn');
+const btnDictionaryFixed = document.getElementById('fixed-dicio-btn');
+const btnAudioFixed = document.getElementById('fixed-audio-btn');
+
+let lastCfiRange = null;
+let lastSelectedText = "";
+// --- FIM DOS NOVOS SELETORES ---
+
+// Adiciona a funcionalidade de recolher/expandir ao menu de contexto
+if (btnToggleFixedMenu) {
+    btnToggleFixedMenu.addEventListener('click', (event) => {
+        event.stopPropagation(); // Impede que o clique se propague para outros elementos
+        fixedContextMenu.classList.toggle('collapsed');
+
+        // Atualiza o título para acessibilidade
+        const isCollapsed = fixedContextMenu.classList.contains('collapsed');
+        btnToggleFixedMenu.setAttribute('title', isCollapsed ? 'Expandir menu' : 'Recolher menu');
+    });
+}
+
 let currentTheme = 'claro';
 let currentBookContents = null;
 let savedAnnotations = [];
-
-// --- Variável de controle da seleção ---
-let lastCfiRange = null;
 
 btnSearch.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -54,10 +76,8 @@ document.addEventListener('click', (e) => {
 
 if (caminhoDoLivro) {
     const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
-    // MUDANÇA 1: O padrão agora é 'none' (página única)
     const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "none" });
 
-    // VERSÃO SIMPLES E ORIGINAL DA BUSCA (CASE-SENSITIVE)
     const doSearch = (q) => {
         rendicao.annotations.remove(null, "search-highlight");
         return Promise.all(
@@ -139,39 +159,27 @@ if (caminhoDoLivro) {
         }
     }
 
-    // CÓDIGO MODIFICADO PARA EXPORTAR EM .TXT
     const exportNotes = () => {
         if (savedAnnotations.length === 0) {
             alert("Não há notas ou grifos para exportar.");
             return;
         }
         const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
-
-        // MUDANÇA 1: Geração de conteúdo em texto plano
-        let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n`;
-        textContent += "========================================\n\n";
+        let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n========================================\n\n`;
 
         savedAnnotations.forEach(ann => {
             if (ann.type === 'highlight') {
-                textContent += `Tipo: Grifo\n`;
-                textContent += `Texto: "${ann.text}"\n\n`;
+                textContent += `Tipo: Grifo\nTexto: "${ann.text}"\n\n`;
             } else if (ann.type === 'annotation') {
-                textContent += `Tipo: Anotação\n`;
-                textContent += `Texto: "${ann.text}"\n`;
-                textContent += `Nota: ${ann.note}\n\n`;
+                textContent += `Tipo: Anotação\nTexto: "${ann.text}"\nNota: ${ann.note}\n\n`;
             }
             textContent += "----------------------------------------\n\n";
         });
-
-        // MUDANÇA 2: Alteração do tipo MIME para texto plano
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-
-        // MUDANÇA 3: Alteração da extensão do arquivo para .txt
         a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
-
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -242,7 +250,6 @@ if (caminhoDoLivro) {
         });
     });
 
-    // MUDANÇA 2: Adiciona a lógica para os botões de layout
     const layoutRadios = document.querySelectorAll('input[name="layout"]');
     layoutRadios.forEach(radio => {
         radio.addEventListener('click', () => {
@@ -251,18 +258,13 @@ if (caminhoDoLivro) {
         });
     });
 
-
     livro.ready.then(() => {
         const { title, creator, pubdate } = livro.packaging.metadata;
         tituloEl.textContent = title;
         document.title = title;
         let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
-        if (creator) {
-            infoHtml += `<p class="book-author">Por: ${creator}</p>`;
-        }
-        if (pubdate) {
-            infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
-        }
+        if (creator) infoHtml += `<p class="book-author">Por: ${creator}</p>`;
+        if (pubdate) infoHtml += `<p class="book-publisher">Publicado em: ${pubdate}</p>`;
         infoLivEl.innerHTML = infoHtml;
         const toc = livro.navigation.toc;
         const sumarioHtml = document.createElement('ul');
@@ -291,21 +293,96 @@ if (caminhoDoLivro) {
             reaplicarAnotacoes();
         });
 
-        rendicao.on("displayed", () => {
-            reaplicarAnotacoes();
-        });
-
+        rendicao.on("displayed", () => reaplicarAnotacoes());
         rendicao.display();
     });
 
     btnAnterior.addEventListener("click", () => rendicao.prev());
     btnProximo.addEventListener("click", () => rendicao.next());
 
-    let lastMousePosition = { x: 0, y: 0 };
+    // --- LÓGICA DO MENU FIXO ---
 
-    rendicao.on("selected", (cfiRange) => {
+    // Função para desativar o menu
+    function deactivateFixedMenu() {
+        lastCfiRange = null;
+        lastSelectedText = "";
+        fixedContextMenu.classList.remove('active');
+    }
+
+    // Ativa o menu quando um texto é selecionado
+    rendicao.on("selected", (cfiRange, contents) => {
         lastCfiRange = cfiRange;
+
+        // CORREÇÃO: Pega o texto selecionado de forma direta.
+        lastSelectedText = contents.window.getSelection().toString().trim();
+
+        if (lastSelectedText.length > 0) {
+            fixedContextMenu.classList.add('active');
+        } else {
+            // Se a seleção for vazia por algum motivo, desativa.
+            deactivateFixedMenu();
+        }
     });
+
+    // Desativa o menu se a seleção for perdida
+    rendicao.on("deselected", () => {
+        deactivateFixedMenu();
+    });
+
+    // Event Listeners para os botões do menu fixo
+    btnHighlightFixed.addEventListener('click', () => {
+        if (!lastCfiRange) return;
+        const grifoExistente = savedAnnotations.some(ann => ann.cfi === lastCfiRange);
+        if (!grifoExistente) {
+            savedAnnotations.push({ cfi: lastCfiRange, text: lastSelectedText, note: null, type: 'highlight' });
+            rendicao.annotations.highlight(lastCfiRange, {}, (e) => { }, "highlight", { "fill": "yellow" });
+        }
+        // Limpa a seleção e desativa o menu após a ação
+        rendicao.getContents()[0].window.getSelection().removeAllRanges();
+        deactivateFixedMenu();
+    });
+
+    btnCopyFixed.addEventListener('click', () => {
+        if (!lastSelectedText) return;
+        navigator.clipboard.writeText(lastSelectedText);
+        rendicao.getContents()[0].window.getSelection().removeAllRanges();
+        deactivateFixedMenu();
+    });
+
+    btnAnnotateFixed.addEventListener('click', () => {
+        if (!lastCfiRange) return;
+        const note = prompt("Digite sua anotação para o trecho selecionado:", "");
+        if (note && note.trim() !== "") {
+            savedAnnotations.push({ cfi: lastCfiRange, text: lastSelectedText, note: note.trim(), type: 'annotation' });
+            rendicao.annotations.underline(lastCfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
+        }
+        rendicao.getContents()[0].window.getSelection().removeAllRanges();
+        deactivateFixedMenu();
+    });
+
+    btnDictionaryFixed.addEventListener('click', () => {
+        if (!lastSelectedText) return;
+        const dictionaryUrl = `https://www.dicio.com.br/${encodeURIComponent(lastSelectedText.split(' ')[0])}`;
+        window.open(dictionaryUrl, '_blank');
+        rendicao.getContents()[0].window.getSelection().removeAllRanges();
+        deactivateFixedMenu();
+    });
+
+    btnAudioFixed.addEventListener('click', () => {
+        if (!lastSelectedText) return;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(lastSelectedText);
+            utterance.lang = 'pt-BR';
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert('O seu navegador não suporta a funcionalidade de áudio.');
+        }
+        rendicao.getContents()[0].window.getSelection().removeAllRanges();
+        deactivateFixedMenu();
+    });
+
+    // --- FIM DA LÓGICA DO MENU FIXO ---
 
     rendicao.hooks.content.register((contents) => {
         const fontLink = contents.document.createElement('link');
@@ -324,29 +401,17 @@ if (caminhoDoLivro) {
             else if (event.key === 'ArrowRight') rendicao.next();
         });
 
-        contents.window.addEventListener('mousemove', (event) => {
-            lastMousePosition = { x: event.clientX, y: event.clientY };
-        });
-
+        // Desativa o menu fixo se o usuário clicar em qualquer lugar dentro do livro
         contents.window.addEventListener('mousedown', () => {
-            const oldMenu = contents.document.getElementById('injected-context-menu');
-            if (oldMenu) oldMenu.remove();
-        });
-
-        contents.window.addEventListener('mouseup', (event) => {
-            if (event.target.closest('#injected-context-menu')) {
-                return;
-            }
-
+            // Verifica se o clique não foi para iniciar uma nova seleção
             setTimeout(() => {
                 const selection = contents.window.getSelection();
-                const selectedText = selection ? selection.toString().trim() : '';
-
-                if (selectedText.length > 0 && lastCfiRange) {
-                    showContextMenu(lastCfiRange, selectedText, contents);
+                if (!selection || selection.toString().trim().length === 0) {
+                    deactivateFixedMenu();
                 }
             }, 10);
         });
+
     });
 
     document.addEventListener('keydown', (event) => {
@@ -354,143 +419,24 @@ if (caminhoDoLivro) {
         else if (event.key === 'ArrowRight') rendicao.next();
     });
 
-    function showContextMenu(cfiRange, selectedText, contents) {
-        const oldMenu = contents.document.getElementById('injected-context-menu');
-        if (oldMenu) oldMenu.remove();
-
-        const menu = contents.document.createElement('div');
-        menu.id = 'injected-context-menu';
-        Object.assign(menu.style, { position: 'absolute', backgroundColor: '#333', border: '1px solid #333', borderRadius: '6px', padding: '6px', boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.2)', zIndex: '9999', display: 'flex', gap: '3px' });
-
-        menu.innerHTML = `
-            <button id="highlight-btn-inj" title="Grifar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMzgwLTQwMGg2MHYtMTIwaDE4MGwtNjAtODAgNjAtODBIMzgwdjI4MFpNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoNDAwcTMzIDAgNTYuNSAyMy41VDc2MC03NjB2NjQwTDQ4MC0yNDAgMjAwLTEyMFptODAtMTIyIDIwMC04NiAyMDAgODZ2LTUxOEgyODB2NTE4Wm0wLTUxOGg0MDAtNDAwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-            <button id="copy-btn-inj" title="Copiar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4=" style="width:22px; height:22px; display:block;"></button>
-            <button id="anotar-btn-inj" title="Anotar"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoMjQwdjgwSDI4MHY1MThsMjAwLTg2IDIwMCA4NnYtMjc4aDgwdjQwMEw0ODAtMjQwIDIwMC0xMjBabTgwLTY0MGgyNDAtMjQwWm00MDAgMTYwdi04MGgtODB2LTgwaDgwdi04MGg4MHY4MGg4MHY4MGgtODB2ODBoLTgwWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-            <button id="dicio-btn-inj" title="Dicionário"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptLTQwLTgydi03OHEtMzMgMC01Ni41LTIzLjVUMzYwLTMyMHYtNDBMMTY4LTU1MnEtMyAxOC01LjUgMzZ0LTIuNSAzNnEwIDEyMSA3OS41IDIxMlQ0NDAtMTYyWm0yNzYtMTAycTQxLTQ1IDYyLjUtMTAwLjVUODAwLTQ4MHEwLTk4LTU0LjUtMTc5VDYwMC03NzZ2MTZxMCAzMy0yMy41IDU2LjVUNTIwLTY4MGgtODB2ODBxMCAxNy0xMS41IDI4LjVUNDAwLTU2MGgtODB2ODBoMjQwcTE3IDAgMjguNSAxMS41VDYwMC00NDB2MTIwaDQwcTI2IDAgNDcgMTUuNXQyOSA0MC41WiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-            <button id="audio-btn-inj" title="Áudio"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjZWZlIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ny41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==" style="width:22px; height:22px; display:block;"></button>
-        `;
-
-        menu.addEventListener('mousedown', (e) => e.stopPropagation());
-        menu.addEventListener('mouseup', (e) => e.stopPropagation());
-
-        contents.document.body.appendChild(menu);
-        const buttons = menu.querySelectorAll('button');
-        buttons.forEach(button => {
-            Object.assign(button.style, { backgroundColor: '#555', border: 'none', padding: '10px', margin: '0', borderRadius: '4px', cursor: 'pointer', lineHeight: '0' });
-            button.addEventListener('mouseover', () => { button.style.backgroundColor = '#1a3f8b'; });
-            button.addEventListener('mouseout', () => { button.style.backgroundColor = '#555'; });
-        });
-        const menuHeight = menu.offsetHeight;
-        const menuWidth = menu.offsetWidth;
-        const top = lastMousePosition.y + contents.window.scrollY - menuHeight - -67;
-        let left = lastMousePosition.x + contents.window.scrollX - (menuWidth / 2);
-        if (left < 5) left = 5;
-        if (left + menuWidth > contents.window.innerWidth) left = contents.window.innerWidth - menuWidth - 5;
-        menu.style.top = `${top}px`;
-        menu.style.left = `${left}px`;
-
-        contents.document.getElementById('highlight-btn-inj').addEventListener('click', () => {
-            // VERIFICA SE JÁ EXISTE UM GRIFO PARA ESTE TRECHO EXATO
-            const grifoExistente = savedAnnotations.some(ann => ann.cfi === cfiRange);
-
-            if (!grifoExistente) {
-                // Se não existir, adiciona o novo grifo
-                savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: null, type: 'highlight' });
-                rendicao.annotations.highlight(cfiRange, {}, (e) => { }, "highlight", { "fill": "yellow" });
-            } else {
-                // Opcional: você pode alertar o usuário que o trecho já está grifado
-                // alert("Este trecho já está grifado.");
-            }
-
-            // Remove o menu de contexto independentemente de ter adicionado ou não
-            menu.remove();
-        });
-
-        contents.document.getElementById('copy-btn-inj').addEventListener('click', () => {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(selectedText).catch(err => {
-                    console.error('Falha ao copiar com a API moderna:', err);
-                });
-            } else {
-                const textArea = contents.document.createElement("textarea");
-                textArea.value = selectedText;
-                textArea.style.position = "fixed";
-                textArea.style.top = "-9999px";
-                textArea.style.left = "-9999px";
-                contents.document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    contents.document.execCommand('copy');
-                } catch (err) {
-                    console.error('Falha ao copiar com o método antigo:', err);
-                }
-                contents.document.body.removeChild(textArea);
-            }
-            menu.remove();
-        });
-
-        contents.document.getElementById('anotar-btn-inj').addEventListener('click', () => {
-            const note = prompt("Digite sua anotação para o trecho selecionado:", "");
-            if (note && note.trim() !== "") {
-                savedAnnotations.push({ cfi: cfiRange, text: selectedText, note: note.trim(), type: 'annotation' });
-                rendicao.annotations.underline(cfiRange, { note: note }, (e) => { }, "underline", { "stroke": "blue" });
-            }
-            menu.remove();
-        });
-
-        contents.document.getElementById('dicio-btn-inj').addEventListener('click', () => {
-            const dictionaryUrl = `https://www.dicio.com.br/${encodeURIComponent(selectedText.split(' ')[0])}`;
-            window.open(dictionaryUrl, '_blank');
-            menu.remove();
-        });
-
-        contents.document.getElementById('audio-btn-inj').addEventListener('click', () => {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(selectedText);
-                utterance.lang = 'pt-BR';
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert('O seu navegador não suporta a funcionalidade de áudio.');
-            }
-            menu.remove();
-        });
-    }
-
-    // SUBSTITUA a função applyTheme existente em leitorc.js por esta
-
-    // SUBSTITUA a função applyTheme pela versão CORRIGIDA abaixo
-
-    // SUBSTITUA NOVAMENTE a função applyTheme por esta versão mais robusta
-
     function applyTheme(contents) {
-        // Seleciona todos os elementos da interface que podem mudar de cor
         const header = document.querySelector('.titulo');
         const footer = document.querySelector('.progresso');
         const mainReaderArea = document.querySelector('.leitor');
         const footerButtons = footer.querySelectorAll('button');
         const footerText = footer.querySelector('#progresso-info');
-
-        // Define as paletas de cores para a INTERFACE (header e footer)
         const uiThemes = {
             claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
             sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
             noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
         };
-
-        // Define as paletas de cores para o CONTEÚDO DO LIVRO (área de leitura)
         const bookThemes = {
-            claro: { bg: '#FFFFFF', text: '#000000' }, // Fundo branco padrão
+            claro: { bg: '#FFFFFF', text: '#000000' },
             sepia: { bg: '#fbf0d9', text: '#5b4636' },
             noturno: { bg: '#383B43', text: '#E0E0E0' }
         };
-
-        // Pega o tema selecionado para a UI e para o Livro
         const selectedUiTheme = uiThemes[currentTheme];
         const selectedBookTheme = bookThemes[currentTheme];
-
-        // --- 1. Aplica o tema na Interface (Header e Footer) ---
         if (header) {
             header.style.backgroundColor = selectedUiTheme.bg;
             header.style.borderColor = selectedUiTheme.border;
@@ -508,34 +454,23 @@ if (caminhoDoLivro) {
                 button.style.borderColor = selectedUiTheme.border;
             });
         }
-
-        // --- 2. Aplica o tema na Área de Leitura (atrás e dentro do iframe) ---
         if (mainReaderArea) {
             mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
         }
-
         if (contents) {
             const oldStyle = contents.document.getElementById('theme-style');
             if (oldStyle) oldStyle.remove();
-
-            // Só injeta o CSS se não for o tema claro (que usa o padrão do livro)
             if (currentTheme !== 'claro') {
                 const style = contents.document.createElement('style');
                 style.id = 'theme-style';
-                style.innerHTML = `
-                body { background-color: ${selectedBookTheme.bg} !important; color: ${selectedBookTheme.text} !important; }
-                p, a, h1, h2, h3, h4, h5, h6 { color: ${selectedBookTheme.text} !important; }
-            `;
+                style.innerHTML = `body { background-color: ${selectedBookTheme.bg} !important; color: ${selectedBookTheme.text} !important; } p, a, h1, h2, h3, h4, h5, h6 { color: ${selectedBookTheme.text} !important; }`;
                 contents.document.head.appendChild(style);
             }
         }
     }
 
-    if (btnLerLivro) {
-        btnLerLivro.innerHTML = ICON_PLAY;
-    }
+    if (btnLerLivro) btnLerLivro.innerHTML = ICON_PLAY;
 
-    // Função que toca o próximo pedaço de texto da fila
     function playNextChunk() {
         if (!isReading || currentSpeechIndex >= speechQueue.length) {
             resetSpeechState();
@@ -544,9 +479,7 @@ if (caminhoDoLivro) {
         const chunk = speechQueue[currentSpeechIndex];
         const utterance = new SpeechSynthesisUtterance(chunk);
         utterance.lang = 'pt-BR';
-        console.log("Aplicando velocidade de leitura:", currentSpeechRate);
         utterance.rate = currentSpeechRate;
-
         utterance.onend = () => {
             currentSpeechIndex++;
             playNextChunk();
@@ -558,7 +491,6 @@ if (caminhoDoLivro) {
         window.speechSynthesis.speak(utterance);
     }
 
-    // Função para resetar o estado da leitura
     function resetSpeechState() {
         isReading = false;
         speechQueue = [];
@@ -569,7 +501,6 @@ if (caminhoDoLivro) {
         }
     }
 
-    // A função principal que é chamada pelo clique no botão
     async function startReadingBook() {
         if (isReading) {
             window.speechSynthesis.cancel();
@@ -580,25 +511,18 @@ if (caminhoDoLivro) {
         isReading = true;
         btnLerLivro.disabled = true;
         btnLerLivro.innerHTML = '<p style="font-size:10px; text-align:center;">Preparando áudio...</p>';
-
         try {
             let fullText = "";
-            const sections = livro.spine.spineItems;
-
-            for (const section of sections) {
+            for (const section of livro.spine.spineItems) {
                 await rendicao.display(section.href);
                 const contents = rendicao.getContents()[0];
                 if (contents && contents.document && contents.document.body) {
                     const text = contents.document.body.textContent;
-                    if (text) {
-                        fullText += text.trim() + " \n ";
-                    }
+                    if (text) fullText += text.trim() + " \n ";
                 }
             }
-
             rendicao.display(originalLocation.start.cfi);
             const cleanedText = fullText.trim();
-
             if (cleanedText.length > 0) {
                 speechQueue = cleanedText.split(/[\n.]+/).filter(chunk => chunk.trim().length > 0);
                 currentSpeechIndex = 0;
@@ -621,32 +545,21 @@ if (caminhoDoLivro) {
         }
     }
 
-    // Adiciona o evento de clique ao botão
-    if (btnLerLivro) {
-        btnLerLivro.addEventListener('click', startReadingBook);
-    }
+    if (btnLerLivro) btnLerLivro.addEventListener('click', startReadingBook);
 
     if (speechSpeedControl) {
-        // Atualiza a variável de velocidade sempre que o usuário mudar a opção
         speechSpeedControl.addEventListener('change', (event) => {
             currentSpeechRate = parseFloat(event.target.value);
         });
     }
 
-    // Garante que a fala pare se o usuário fechar a página
     window.addEventListener('beforeunload', () => {
-        if (isReading) {
-            window.speechSynthesis.cancel();
-        }
+        if (isReading) window.speechSynthesis.cancel();
     });
 
-    // ---> ADICIONE ESTA NOVA FUNÇÃO <---
     function reaplicarAnotacoes() {
-        // Limpa anotações antigas para evitar duplicatas visuais
         rendicao.annotations.remove(null, "highlight");
         rendicao.annotations.remove(null, "underline");
-
-        // Itera sobre todas as anotações que você salvou
         savedAnnotations.forEach(ann => {
             if (ann.type === 'highlight') {
                 rendicao.annotations.highlight(ann.cfi, {}, (e) => { }, "highlight", { "fill": "yellow" });
@@ -656,44 +569,26 @@ if (caminhoDoLivro) {
         });
     }
 
-    // ADICIONE ESTE BLOCO DE CÓDIGO em leitorc.js
-
     if (btnToggleSidebar) {
         btnToggleSidebar.addEventListener('click', () => {
             const body = document.body;
             const isCollapsed = body.classList.contains('sidebar-collapsed');
-
             document.body.classList.add('sidebar-collapsed');
-
-            // Atualiza o título do botão para melhor acessibilidade
             btnToggleSidebar.setAttribute('title', isCollapsed ? 'Ocultar Sumário' : 'Mostrar Sumário');
-
-            // AVISA AO EPUB.JS QUE A ÁREA DE LEITURA MUDOU DE TAMANHO
-            // Isso é crucial para que o texto se ajuste corretamente (reflow)
             setTimeout(() => {
-                if (rendicao) {
-                    rendicao.resize();
-                }
-            }, 400); // O tempo (400ms) deve ser igual ao da transição do CSS
-        });
-    }
-
-    // ADICIONE ESTE NOVO BLOCO DE CÓDIGO
-    if (btnShowSidebar) {
-        btnShowSidebar.addEventListener('click', () => {
-            // Apenas remove a classe para mostrar o sumário
-            document.body.classList.remove('sidebar-collapsed');
-
-            // Também avisa ao Epub.js para redimensionar o conteúdo
-            setTimeout(() => {
-                if (rendicao) {
-                    rendicao.resize();
-                }
+                if (rendicao) rendicao.resize();
             }, 400);
         });
     }
 
-
+    if (btnShowSidebar) {
+        btnShowSidebar.addEventListener('click', () => {
+            document.body.classList.remove('sidebar-collapsed');
+            setTimeout(() => {
+                if (rendicao) rendicao.resize();
+            }, 400);
+        });
+    }
 } else {
     tituloEl.textContent = "Erro";
     leitorEl.innerHTML = "<h3>Nenhum livro selecionado.</h3>";
