@@ -47,6 +47,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0; /* Impede que este item encolha */
 }
 
 .conf {
@@ -54,11 +55,6 @@ header {
     align-items: center;
     gap: 20px;
 
-}
-
-.info_liv {
-    width: 50%;
-    height: auto;
 }
 
 .btn {
@@ -677,12 +673,6 @@ input[type="range"] {
     flex-shrink: 0; 
 }
 
-.home {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0; /* Impede que este item encolha */
-}
 
 .info_liv {
     width: 100%; /* Ocupa a largura total */
@@ -730,7 +720,7 @@ input[type="range"] {
 
 .titulo {
     grid-area: header; /* Mantém a área do grid que você já definiu */
-    height: 50px;      /* << Defina a altura que desejar. Ex: 50px */
+    height: 27px;      /* << Defina a altura que desejar. Ex: 50px */
     padding: 0 15px;   /* Adiciona um espaçamento nas laterais */
     /* Centraliza o título verticalmente e horizontalmente */
     display: flex;
@@ -780,4 +770,54 @@ input[type="range"] {
 /* Regra para MOSTRAR o botão flutuante APENAS quando a sidebar estiver recolhida */
 body.sidebar-collapsed #btn-show-sidebar {
     display: block;
+}
+
+/* --- ESTILOS PARA O LIGHTBOX DA IMAGEM --- */
+
+/* O contêiner do overlay (fundo escuro) */
+.lightbox {
+    display: none; /* Escondido por padrão */
+    position: fixed; /* Fica sobre todo o conteúdo */
+    z-index: 3000; /* Garante que fique na frente de tudo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Permite scroll se a imagem for muito grande */
+    background-color: rgba(0, 0, 0, 0.85); /* Fundo preto semitransparente */
+    justify-content: center;
+    align-items: center;
+}
+
+/* A imagem expandida */
+.lightbox-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90vh;
+    animation: zoom 0.4s; /* Animação de zoom */
+}
+
+/* Animação de zoom */
+@keyframes zoom {
+    from {transform: scale(0.5)}
+    to {transform: scale(1)}
+}
+
+/* O botão de fechar (X) */
+.close-lightbox {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-lightbox:hover,
+.close-lightbox:focus {
+    color: #bbb;
+    text-decoration: none;
 }
