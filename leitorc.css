@@ -332,52 +332,90 @@ header {
     pointer-events: none;
 }*/
 
-
-/* --- Estilos para a Barra de Pesquisa (MODIFICADO) --- */
+/* --- Estilos para a Barra de Pesquisa (MODIFICADO COM TEMA CLARO) --- */
 #search-bar {
     position: absolute;
-    /* MUDANÇA: de 'fixed' para 'absolute' */
-    background-color: #333;
-    /* Fundo escuro para contraste */
+    background-color: #FFFFFF; 
     padding: 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    /* Sombra mais suave */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
     z-index: 1001;
     border-radius: 8px;
-    /* Cantos arredondados */
-    /* REMOVIDO: transform, bottom, left, width: 100% */
-    /* ADICIONADO: controle de visibilidade com display */
+    border: 1px solid #ddd; 
     display: none;
     flex-direction: column;
-    /* Organiza o input e o botão */
-    gap: 10px;
+    gap: 8px;
     width: 280px;
-    /* Largura fixa */
 }
 
 #search-bar.visible {
     display: flex;
-    /* MUDANÇA: Usa flex para mostrar */
 }
 
 #search-input {
     flex-grow: 1;
     padding: 10px;
     border-radius: 5px;
-    border: 1px solid #555;
-    background-color: #444;
-    color: white;
+    border: 1px solid #ccc; /* Bordas mais claras */
+    background-color: #EFEFEF; /* Cor de fundo padrão de inputs do seu projeto */
+    color: #333; /* Cor do texto escura */
 }
 
 #close-search-btn {
-    padding: 8px 12px;
+    padding: 10px 15px;
     border: none;
-    background-color: #f44336;
-    color: white;
+    background-color: transparent; /* Fundo transparente */
+    color: #888; /* Cor do "X" mais suave */
     border-radius: 5px;
     cursor: pointer;
     align-self: flex-end;
-    /* Alinha o botão à direita */
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    transition: background-color 0.2s;
+}
+
+#close-search-btn:hover {
+    background-color: #E0E0E0; /* Efeito hover para o botão de fechar */
+}
+
+/* --- Estilos para os Controles de Navegação da Pesquisa --- */
+.search-main-controls, #search-nav-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 93%;
+}
+
+#search-nav-controls {
+    background-color: #EFEFEF;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+#search-results-info {
+    font-size: 13px;
+    color: #555;
+}
+
+.search-buttons button {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.search-buttons button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+
+.search-buttons button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 /* ================================================= */
@@ -668,7 +706,7 @@ input[type="range"] {
     display: flex;
     flex-direction: column;
     padding: 10px;
-    height: 105px;
+    height: 160px;
     border-bottom: 1px solid #ddd;
     flex-shrink: 0; 
 }

@@ -1,6 +1,10 @@
 const parametros = new URLSearchParams(window.location.search);
 const caminhoDoLivro = parametros.get('livro');
 
+// VARIÁVEIS PARA CONTROLE DA PESQUISA
+let searchResults = [];
+let currentSearchIndex = 0;
+
 // ESPERA O HTML ESTAR COMPLETAMENTE CARREGADO ANTES DE EXECUTAR O JAVASCRIPT
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -45,6 +49,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnDictionaryFixed = document.getElementById('fixed-dicio-btn');
     const btnAudioFixed = document.getElementById('fixed-audio-btn');
 
+    // Seletores para os novos botões de pesquisa
+    const searchResultsInfo = document.getElementById('search-results-info');
+    const searchPrevBtn = document.getElementById('search-prev-btn');
+    const searchNextBtn = document.getElementById('search-next-btn');
+
+
     let lastCfiRange = null;
     let lastSelectedText = "";
     // --- FIM DOS NOVOS SELETORES ---
@@ -74,7 +84,19 @@ document.addEventListener('DOMContentLoaded', function () {
             searchInput.focus();
         }
     });
-    closeSearchBtn.addEventListener('click', () => searchBar.classList.remove('visible'));
+    
+    // ** MODIFICADO **
+    closeSearchBtn.addEventListener('click', () => {
+        searchBar.classList.remove('visible');
+        // Limpa grifos e reseta o estado da pesquisa
+        rendicao.annotations.remove(null, "search-highlight");
+        searchResults = [];
+        currentSearchIndex = 0;
+        searchResultsInfo.textContent = "";
+        searchPrevBtn.disabled = true;
+        searchNextBtn.disabled = true;
+    });
+
     document.addEventListener('click', (e) => {
         if (!searchBar.contains(e.target) && !btnSearch.contains(e.target) && searchBar.classList.contains('visible')) {
             searchBar.classList.remove('visible');
@@ -96,25 +118,64 @@ document.addEventListener('DOMContentLoaded', function () {
             ).then(results => Promise.resolve([].concat.apply([], results)));
         };
 
+        // ** NOVO ** - Função para exibir um resultado da pesquisa
+        function displaySearchResult() {
+            if (searchResults.length === 0) return;
+        
+            // Limpa o grifado anterior
+            rendicao.annotations.remove(null, "search-highlight");
+        
+            const cfi = searchResults[currentSearchIndex].cfi;
+            rendicao.display(cfi).then(() => {
+                rendicao.annotations.highlight(cfi, {}, (e) => {
+                    console.error("Erro ao grifar:", e);
+                }, "search-highlight", { "fill": "orange", "fill-opacity": "0.5", "stroke": "orange" });
+            });
+        
+            // Atualiza o contador
+            searchResultsInfo.textContent = `${currentSearchIndex + 1} de ${searchResults.length}`;
+        
+            // Habilita/desabilita os botões de navegação
+            searchPrevBtn.disabled = currentSearchIndex === 0;
+            searchNextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
+        }
+
+        // ** MODIFICADO ** - Evento principal da pesquisa (quando aperta Enter)
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (query) {
                     doSearch(query).then((results) => {
+                        searchResults = results;
+                        currentSearchIndex = 0;
+        
                         if (results.length > 0) {
-                            const firstResultCfi = results[0].cfi;
-                            rendicao.display(firstResultCfi).then(() => {
-                                rendicao.annotations.highlight(firstResultCfi, {}, (e) => {
-                                    console.error("Erro ao grifar:", e);
-                                }, "search-highlight", { "fill": "orange" });
-                            });
+                            displaySearchResult();
                         } else {
-                            alert("Nenhum resultado encontrado.");
+                            searchResultsInfo.textContent = "Nenhum resultado";
+                            searchPrevBtn.disabled = true;
+                            searchNextBtn.disabled = true;
                         }
                     });
                 }
             }
         });
+
+        // ** NOVO ** - Eventos para os botões de navegação
+        searchPrevBtn.addEventListener('click', () => {
+            if (currentSearchIndex > 0) {
+                currentSearchIndex--;
+                displaySearchResult();
+            }
+        });
+        
+        searchNextBtn.addEventListener('click', () => {
+            if (currentSearchIndex < searchResults.length - 1) {
+                currentSearchIndex++;
+                displaySearchResult();
+            }
+        });
+
 
         const menuModal = document.getElementById('menu-modal');
         const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
@@ -439,84 +500,75 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (event.key === 'ArrowRight') rendicao.next();
         });
 
-        function applyTheme(contents) {
-            const header = document.querySelector('.titulo');
-            const footer = document.querySelector('.progresso');
-            const mainReaderArea = document.querySelector('.leitor');
-            const footerButtons = footer.querySelectorAll('button');
-            const footerText = footer.querySelector('#progresso-info');
-            const uiThemes = {
-                claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
-                sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
-                noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
-            };
-            const bookThemes = {
-                claro: { bg: '#FFFFFF', text: '#000000' },
-                sepia: { bg: '#fbf0d9', text: '#5b4636' },
-                noturno: { bg: '#383B43', text: '#E0E0E0' }
-            };
-            const selectedUiTheme = uiThemes[currentTheme];
-            const selectedBookTheme = bookThemes[currentTheme];
-            if (header) {
-                header.style.backgroundColor = selectedUiTheme.bg;
-                header.style.borderColor = selectedUiTheme.border;
-                if (header.querySelector('p')) {
-                    header.querySelector('p').style.color = selectedUiTheme.text;
-                }
-            }
-            if (footer) {
-                footer.style.backgroundColor = selectedUiTheme.bg;
-                footer.style.borderColor = selectedUiTheme.border;
-                if (footerText) footerText.style.color = selectedUiTheme.text;
-                footerButtons.forEach(button => {
-                    button.style.backgroundColor = selectedUiTheme.buttonBg;
-                    button.style.color = selectedUiTheme.text;
-                    button.style.borderColor = selectedUiTheme.border;
-                });
-            }
-            if (mainReaderArea) {
-                mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
-            }
-            if (contents) {
-                const oldStyle = contents.document.getElementById('theme-style');
-                if (oldStyle) oldStyle.remove();
-
-                if (currentTheme !== 'claro') {
-                    const style = contents.document.createElement('style');
-                    style.id = 'theme-style';
-
-                    // CSS aprimorado com regras de exceção para o tema noturno
-                    let themeStyles = `
-            /* Estilo geral para o corpo do livro */
-            body {
-                background-color: ${selectedBookTheme.bg} !important;
-                color: ${selectedBookTheme.text} !important;
-            }
-
-            /* Aplica a cor de texto clara a todos os elementos principais */
-            p, a, h1, h2, h3, h4, h5, h6, li, span {
-                color: ${selectedBookTheme.text} !important;
-            }
-        `;
-
-                    // Adiciona uma exceção APENAS para o tema noturno
-                    if (currentTheme === 'noturno') {
-                        themeStyles += `
-                /* * EXCEÇÃO: Para divs com fundo claro (como expediente, créditos, etc.),
-                 * força o texto de todos os elementos filhos a ser escuro para garantir a legibilidade.
-                 * Você pode adicionar mais classes aqui se encontrar em outros livros (ex: .creditos, .colophon)
-                */
-                .expediente *, .sumario-secao * {
-                    color: #1E1E1E !important; /* Cor de texto escura */
-                }
-            `;
-                    }
-
-                    style.innerHTML = themeStyles;
-                    contents.document.head.appendChild(style);
-                }
+    function applyTheme(contents) {
+        const header = document.querySelector('.titulo');
+        const footer = document.querySelector('.progresso');
+        const mainReaderArea = document.querySelector('.leitor');
+        const footerButtons = footer.querySelectorAll('button');
+        const footerText = footer.querySelector('#progresso-info');
+        const uiThemes = {
+            claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
+            sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
+            noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
+        };
+        const bookThemes = {
+            claro: { bg: '#FFFFFF', text: '#000000' },
+            sepia: { bg: '#fbf0d9', text: '#5b4636' },
+            noturno: { bg: '#383B43', text: '#E0E0E0' }
+        };
+        const selectedUiTheme = uiThemes[currentTheme];
+        const selectedBookTheme = bookThemes[currentTheme];
+        if (header) {
+            header.style.backgroundColor = selectedUiTheme.bg;
+            header.style.borderColor = selectedUiTheme.border;
+            if (header.querySelector('p')) {
+                header.querySelector('p').style.color = selectedUiTheme.text;
             }
         }
+        if (footer) {
+            footer.style.backgroundColor = selectedUiTheme.bg;
+            footer.style.borderColor = selectedUiTheme.border;
+            if (footerText) footerText.style.color = selectedUiTheme.text;
+            footerButtons.forEach(button => {
+                button.style.backgroundColor = selectedUiTheme.buttonBg;
+                button.style.color = selectedUiTheme.text;
+                button.style.borderColor = selectedUiTheme.border;
+            });
+        }
+        if (mainReaderArea) {
+            mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
+        }
+        if (contents) {
+            const oldStyle = contents.document.getElementById('theme-style');
+            if (oldStyle) oldStyle.remove();
+        
+            if (currentTheme !== 'claro') {
+                const style = contents.document.createElement('style');
+                style.id = 'theme-style';
+        
+                let themeStyles = `
+                    body {
+                        background-color: ${selectedBookTheme.bg} !important;
+                        color: ${selectedBookTheme.text} !important;
+                    }
+                    p, a, h1, h2, h3, h4, h5, h6, li, span {
+                        color: ${selectedBookTheme.text} !important;
+                    }
+                `;
+        
+                if (currentTheme === 'noturno') {
+                    themeStyles += `
+                        .expediente *, .sumario *, .toc *, .credits *, .sumario-secao * {
+                            color: #1E1E1E !important;
+                        }
+                    `;
+                }
+        
+                style.innerHTML = themeStyles;
+                contents.document.head.appendChild(style);
+            }
+        }
+    }
 
         if (btnLerLivro) btnLerLivro.innerHTML = ICON_PLAY;
 
