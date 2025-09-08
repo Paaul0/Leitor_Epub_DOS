@@ -445,14 +445,24 @@ document.addEventListener('DOMContentLoaded', function () {
             const mainReaderArea = document.querySelector('.leitor');
             const footerButtons = footer.querySelectorAll('button');
             const footerText = footer.querySelector('#progresso-info');
-            const uiThemes = { claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' }, sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' }, noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' } };
-            const bookThemes = { claro: { bg: '#FFFFFF', text: '#000000' }, sepia: { bg: '#fbf0d9', text: '#5b4636' }, noturno: { bg: '#383B43', text: '#E0E0E0' } };
+            const uiThemes = {
+                claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
+                sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
+                noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
+            };
+            const bookThemes = {
+                claro: { bg: '#FFFFFF', text: '#000000' },
+                sepia: { bg: '#fbf0d9', text: '#5b4636' },
+                noturno: { bg: '#383B43', text: '#E0E0E0' }
+            };
             const selectedUiTheme = uiThemes[currentTheme];
             const selectedBookTheme = bookThemes[currentTheme];
             if (header) {
                 header.style.backgroundColor = selectedUiTheme.bg;
                 header.style.borderColor = selectedUiTheme.border;
-                if (header.querySelector('p')) { header.querySelector('p').style.color = selectedUiTheme.text; }
+                if (header.querySelector('p')) {
+                    header.querySelector('p').style.color = selectedUiTheme.text;
+                }
             }
             if (footer) {
                 footer.style.backgroundColor = selectedUiTheme.bg;
@@ -464,14 +474,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     button.style.borderColor = selectedUiTheme.border;
                 });
             }
-            if (mainReaderArea) { mainReaderArea.style.backgroundColor = selectedBookTheme.bg; }
+            if (mainReaderArea) {
+                mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
+            }
             if (contents) {
                 const oldStyle = contents.document.getElementById('theme-style');
                 if (oldStyle) oldStyle.remove();
+
                 if (currentTheme !== 'claro') {
                     const style = contents.document.createElement('style');
                     style.id = 'theme-style';
-                    style.innerHTML = `body { background-color: ${selectedBookTheme.bg} !important; color: ${selectedBookTheme.text} !important; } p, a, h1, h2, h3, h4, h5, h6 { color: ${selectedBookTheme.text} !important; }`;
+
+                    // CSS aprimorado com regras de exceção para o tema noturno
+                    let themeStyles = `
+            /* Estilo geral para o corpo do livro */
+            body {
+                background-color: ${selectedBookTheme.bg} !important;
+                color: ${selectedBookTheme.text} !important;
+            }
+
+            /* Aplica a cor de texto clara a todos os elementos principais */
+            p, a, h1, h2, h3, h4, h5, h6, li, span {
+                color: ${selectedBookTheme.text} !important;
+            }
+        `;
+
+                    // Adiciona uma exceção APENAS para o tema noturno
+                    if (currentTheme === 'noturno') {
+                        themeStyles += `
+                /* * EXCEÇÃO: Para divs com fundo claro (como expediente, créditos, etc.),
+                 * força o texto de todos os elementos filhos a ser escuro para garantir a legibilidade.
+                 * Você pode adicionar mais classes aqui se encontrar em outros livros (ex: .creditos, .colophon)
+                */
+                .expediente *, .sumario-secao * {
+                    color: #1E1E1E !important; /* Cor de texto escura */
+                }
+            `;
+                    }
+
+                    style.innerHTML = themeStyles;
                     contents.document.head.appendChild(style);
                 }
             }
