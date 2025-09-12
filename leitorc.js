@@ -4,6 +4,7 @@ const caminhoDoLivro = parametros.get('livro');
 // VARIÁVEIS PARA CONTROLE DA PESQUISA
 let searchResults = [];
 let currentSearchIndex = 0;
+let currentSearchHighlightCfi = null;
 
 // ESPERA O HTML ESTAR COMPLETAMENTE CARREGADO ANTES DE EXECUTAR O JAVASCRIPT
 document.addEventListener('DOMContentLoaded', function () {
@@ -34,13 +35,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnShowSidebar = document.getElementById('btn-show-sidebar');
     const btnLerLivro = document.getElementById('btn-ler-livro');
     const speechSpeedControl = document.getElementById('speech-speed-control');
+    const btnKindleExibicao = document.getElementById('btn-kindle-exibicao');
 
     // Seletores para o Lightbox
     const imageLightbox = document.getElementById('image-lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     const closeLightboxBtn = document.querySelector('.close-lightbox');
 
-    // --- NOVOS SELETORES E VARIÁVEIS DE CONTROLE ---
+    // Seletores do Menu de Contexto
     const btnToggleFixedMenu = document.getElementById('btn-toggle-fixed-menu');
     const fixedContextMenu = document.getElementById('fixed-context-menu');
     const btnHighlightFixed = document.getElementById('fixed-highlight-btn');
@@ -49,18 +51,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnDictionaryFixed = document.getElementById('fixed-dicio-btn');
     const btnAudioFixed = document.getElementById('fixed-audio-btn');
 
-    // Seletores para os novos botões de pesquisa
+    // Seletores para os botões de pesquisa
     const searchResultsInfo = document.getElementById('search-results-info');
     const searchPrevBtn = document.getElementById('search-prev-btn');
     const searchNextBtn = document.getElementById('search-next-btn');
 
-
+    // Variáveis de estado
     let lastCfiRange = null;
     let lastSelectedText = "";
-    // --- FIM DOS NOVOS SELETORES ---
+    let currentTheme = 'claro';
+    let currentBookContents = null;
+    let savedAnnotations = [];
 
-
-    // Adiciona a funcionalidade de recolher/expandir ao menu de contexto
     if (btnToggleFixedMenu) {
         btnToggleFixedMenu.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -70,45 +72,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    let currentTheme = 'claro';
-    let currentBookContents = null;
-    let savedAnnotations = [];
-
-    btnSearch.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const rect = btnSearch.getBoundingClientRect();
-        searchBar.style.top = `${rect.bottom + window.scrollY + 5}px`;
-        searchBar.style.left = `${rect.left + window.scrollX - (searchBar.offsetWidth / 2) + (rect.width / 2)}px`;
-        searchBar.classList.toggle('visible');
-        if (searchBar.classList.contains('visible')) {
-            searchInput.focus();
-        }
-    });
-    
-    // ** MODIFICADO **
-    closeSearchBtn.addEventListener('click', () => {
-        searchBar.classList.remove('visible');
-        // Limpa grifos e reseta o estado da pesquisa
-        rendicao.annotations.remove(null, "search-highlight");
-        searchResults = [];
-        currentSearchIndex = 0;
-        searchResultsInfo.textContent = "";
-        searchPrevBtn.disabled = true;
-        searchNextBtn.disabled = true;
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!searchBar.contains(e.target) && !btnSearch.contains(e.target) && searchBar.classList.contains('visible')) {
-            searchBar.classList.remove('visible');
-        }
-    });
-
     if (caminhoDoLivro) {
         const livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
-        const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "none" });
+        const rendicao = livro.renderTo("leitor", { width: "100%", height: "100%", spread: "none", allowScriptedContent: true });
+
+        const sendBookToKindle = () => {
+            const kindleEmail = prompt("Por favor, digite seu e-mail do Kindle (ex: seu_nome@kindle.com):", "");
+
+            if (kindleEmail === null || kindleEmail.trim() === "") {
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(kindleEmail)) {
+                alert("Formato de e-mail inválido. Por favor, tente novamente.");
+                return;
+            }
+
+            const bookTitle = livro.packaging.metadata.title || "Livro sem título";
+
+            const dataForBackend = {
+                to_email: kindleEmail,
+                book_path: caminhoDoLivro
+            };
+
+            console.log("--- SIMULANDO ENVIO DO LIVRO PARA O KINDLE ---");
+            console.log("Dados que seriam enviados para o back-end:", dataForBackend);
+
+            alert(`O livro "${bookTitle}" seria enviado para ${kindleEmail}.\n\n(Esta é uma simulação. Verifique o console do desenvolvedor para ver os dados).`);
+        };
+
+        if (btnKindleExibicao) {
+            btnKindleExibicao.addEventListener('click', sendBookToKindle);
+        }
 
         const doSearch = (q) => {
-            rendicao.annotations.remove(null, "search-highlight");
             return Promise.all(
                 livro.spine.spineItems.map(item =>
                     item.load(livro.load.bind(livro))
@@ -118,29 +116,55 @@ document.addEventListener('DOMContentLoaded', function () {
             ).then(results => Promise.resolve([].concat.apply([], results)));
         };
 
-        // ** NOVO ** - Função para exibir um resultado da pesquisa
+        function closeAndClearSearch() {
+            searchBar.classList.remove('visible');
+            currentSearchHighlightCfi = null;
+
+            const contents = rendicao.getContents()[0];
+            if (contents) {
+                const highlightElement = contents.document.querySelector('g.search-highlight');
+                if (highlightElement) {
+                    highlightElement.style.display = 'none';
+                }
+            }
+            searchResults = [];
+            currentSearchIndex = 0;
+            searchResultsInfo.textContent = "";
+            searchPrevBtn.disabled = true;
+            searchNextBtn.disabled = true;
+            searchInput.value = "";
+        }
+
         function displaySearchResult() {
             if (searchResults.length === 0) return;
-        
-            // Limpa o grifado anterior
-            rendicao.annotations.remove(null, "search-highlight");
-        
             const cfi = searchResults[currentSearchIndex].cfi;
-            rendicao.display(cfi).then(() => {
-                rendicao.annotations.highlight(cfi, {}, (e) => {
-                    console.error("Erro ao grifar:", e);
-                }, "search-highlight", { "fill": "orange", "fill-opacity": "0.5", "stroke": "orange" });
-            });
-        
-            // Atualiza o contador
+            currentSearchHighlightCfi = cfi;
+            rendicao.display(cfi);
+
             searchResultsInfo.textContent = `${currentSearchIndex + 1} de ${searchResults.length}`;
-        
-            // Habilita/desabilita os botões de navegação
             searchPrevBtn.disabled = currentSearchIndex === 0;
             searchNextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
         }
 
-        // ** MODIFICADO ** - Evento principal da pesquisa (quando aperta Enter)
+        btnSearch.addEventListener('click', (e) => {
+            e.stopPropagation();
+            searchBar.classList.toggle('visible');
+
+            if (searchBar.classList.contains('visible')) {
+                searchInput.focus();
+            } else {
+                closeAndClearSearch();
+            }
+        });
+
+        closeSearchBtn.addEventListener('click', closeAndClearSearch);
+
+        document.addEventListener('click', (e) => {
+            if (!searchBar.contains(e.target) && !btnSearch.contains(e.target) && searchBar.classList.contains('visible')) {
+                closeAndClearSearch();
+            }
+        });
+
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
@@ -148,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     doSearch(query).then((results) => {
                         searchResults = results;
                         currentSearchIndex = 0;
-        
                         if (results.length > 0) {
                             displaySearchResult();
                         } else {
@@ -161,14 +184,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // ** NOVO ** - Eventos para os botões de navegação
         searchPrevBtn.addEventListener('click', () => {
             if (currentSearchIndex > 0) {
                 currentSearchIndex--;
                 displaySearchResult();
             }
         });
-        
+
         searchNextBtn.addEventListener('click', () => {
             if (currentSearchIndex < searchResults.length - 1) {
                 currentSearchIndex++;
@@ -176,19 +198,45 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-
         const menuModal = document.getElementById('menu-modal');
         const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
         const menuChapterTitle = document.getElementById('menu-chapter-title');
         const panelSumario = document.getElementById('panel-sumario');
 
+        const exportNotes = () => {
+            if (savedAnnotations.length === 0) {
+                alert("Não há notas ou grifos para exportar.");
+                return;
+            }
+            const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
+            let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n========================================\n\n`;
+
+            savedAnnotations.forEach(ann => {
+                if (ann.type === 'highlight') {
+                    textContent += `Tipo: Grifo\nTexto: "${ann.text}"\n\n`;
+                } else if (ann.type === 'annotation') {
+                    textContent += `Tipo: Anotação\nTexto: "${ann.text}"\nNota: ${ann.note}\n\n`;
+                }
+                textContent += "----------------------------------------\n\n";
+            });
+
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
         function renderNotesPanel() {
             const panelContainer = document.getElementById('panel-notas');
             panelContainer.innerHTML = '';
+            const hasNotes = savedAnnotations.length > 0;
 
-            if (savedAnnotations.length === 0) {
-                panelContainer.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação ou grifo.</p>';
-            } else {
+            if (hasNotes) {
                 const notesList = document.createElement('div');
                 savedAnnotations.forEach(annotation => {
                     const noteItem = document.createElement('div');
@@ -210,6 +258,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     notesList.appendChild(noteItem);
                 });
                 panelContainer.appendChild(notesList);
+            } else {
+                panelContainer.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez nenhuma anotação ou grifo.</p>';
             }
 
             const exportButton = document.createElement('button');
@@ -222,37 +272,10 @@ document.addEventListener('DOMContentLoaded', function () {
             exportButton.onclick = exportNotes;
             panelContainer.appendChild(exportButton);
 
-            if (savedAnnotations.length === 0) {
-                exportButton.style.display = 'none';
+            if (!hasNotes) {
+                exportButton.disabled = true;
             }
         }
-
-        const exportNotes = () => {
-            if (savedAnnotations.length === 0) {
-                alert("Não há notas ou grifos para exportar.");
-                return;
-            }
-            const bookTitle = livro.packaging.metadata.title || "livro-desconhecido";
-            let textContent = `Notas e Grifos do Livro: ${bookTitle}\n\n========================================\n\n`;
-
-            savedAnnotations.forEach(ann => {
-                if (ann.type === 'highlight') {
-                    textContent += `Tipo: Grifo\nTexto: "${ann.text}"\n\n`;
-                } else if (ann.type === 'annotation') {
-                    textContent += `Tipo: Anotação\nTexto: "${ann.text}"\nNota: ${ann.note}\n\n`;
-                }
-                textContent += "----------------------------------------\n\n";
-            });
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `notas-${bookTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
 
         btnMenu.addEventListener('click', () => {
             const currentLocation = rendicao.currentLocation();
@@ -323,9 +346,6 @@ document.addEventListener('DOMContentLoaded', function () {
             radio.addEventListener('click', () => {
                 const newSpread = radio.value;
                 rendicao.spread(newSpread);
-                setTimeout(() => {
-                    rendicao.resize();
-                }, 10);
             });
         });
 
@@ -351,22 +371,21 @@ document.addEventListener('DOMContentLoaded', function () {
             sumarioContainer.appendChild(sumarioHtml);
 
             rendicao.on("relocated", (location) => {
-                if (location.start && livro.spine.items.length > 0) {
-                    const chapterIndex = location.start.index;
-                    const totalChapters = livro.spine.items.length;
-                    const pageInChapter = location.start.displayed.page;
-                    const totalPagesInChapter = location.start.displayed.total;
-                    const progressWithinChapter = (pageInChapter - 1) / totalPagesInChapter;
-                    const totalProgress = (chapterIndex + progressWithinChapter) / totalChapters;
-                    const percentage = Math.floor(totalProgress * 100);
+                if (location.start && livro.locations && livro.locations.length() > 0) {
+                    const percentage = Math.floor(livro.locations.percentageFromCfi(location.start.cfi) * 100);
                     progressoInfo.textContent = `Progresso: ${percentage}%`;
                 }
-                reaplicarAnotacoes();
+                // MUDANÇA: A chamada para reaplicarAnotacoes() foi REMOVIDA daqui
             });
 
+            // A função de reaplicar os grifos agora é chamada apenas aqui
             rendicao.on("displayed", () => reaplicarAnotacoes());
+            
+            return livro.locations.generate(1024);
+        }).then(() => {
             rendicao.display();
         });
+
 
         btnAnterior.addEventListener("click", () => rendicao.prev());
         btnProximo.addEventListener("click", () => rendicao.next());
@@ -449,7 +468,7 @@ document.addEventListener('DOMContentLoaded', function () {
             contents.document.head.appendChild(fontLink);
 
             const style = contents.document.createElement('style');
-            style.innerHTML = ` img, svg { max-width: 100% !important; height: auto !important; object-fit: contain; cursor: pointer; } p { margin-bottom: 1.5em; } ::selection { background-color: #D3D3D3; }`;
+            style.innerHTML = ` img, svg { max-width: 100% !important; height: auto !important; object-fit: contain; cursor: pointer; } p { margin-bottom: 1.5em; } ::selection { background-color: #D3D3D3; } g.search-highlight { display: none; }`;
             contents.document.head.appendChild(style);
             currentBookContents = contents;
             applyTheme(contents);
@@ -500,75 +519,75 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (event.key === 'ArrowRight') rendicao.next();
         });
 
-    function applyTheme(contents) {
-        const header = document.querySelector('.titulo');
-        const footer = document.querySelector('.progresso');
-        const mainReaderArea = document.querySelector('.leitor');
-        const footerButtons = footer.querySelectorAll('button');
-        const footerText = footer.querySelector('#progresso-info');
-        const uiThemes = {
-            claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
-            sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
-            noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
-        };
-        const bookThemes = {
-            claro: { bg: '#FFFFFF', text: '#000000' },
-            sepia: { bg: '#fbf0d9', text: '#5b4636' },
-            noturno: { bg: '#383B43', text: '#E0E0E0' }
-        };
-        const selectedUiTheme = uiThemes[currentTheme];
-        const selectedBookTheme = bookThemes[currentTheme];
-        if (header) {
-            header.style.backgroundColor = selectedUiTheme.bg;
-            header.style.borderColor = selectedUiTheme.border;
-            if (header.querySelector('p')) {
-                header.querySelector('p').style.color = selectedUiTheme.text;
+        function applyTheme(contents) {
+            const header = document.querySelector('.titulo');
+            const footer = document.querySelector('.progresso');
+            const mainReaderArea = document.querySelector('.leitor');
+            const footerButtons = footer.querySelectorAll('button');
+            const footerText = footer.querySelector('#progresso-info');
+            const uiThemes = {
+                claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd', buttonBg: '#f0f0f0' },
+                sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb', buttonBg: '#f4e8d1' },
+                noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59', buttonBg: '#4a4e59' }
+            };
+            const bookThemes = {
+                claro: { bg: '#FFFFFF', text: '#000000' },
+                sepia: { bg: '#fbf0d9', text: '#5b4636' },
+                noturno: { bg: '#383B43', text: '#E0E0E0' }
+            };
+            const selectedUiTheme = uiThemes[currentTheme];
+            const selectedBookTheme = bookThemes[currentTheme];
+            if (header) {
+                header.style.backgroundColor = selectedUiTheme.bg;
+                header.style.borderColor = selectedUiTheme.border;
+                if (header.querySelector('p')) {
+                    header.querySelector('p').style.color = selectedUiTheme.text;
+                }
             }
-        }
-        if (footer) {
-            footer.style.backgroundColor = selectedUiTheme.bg;
-            footer.style.borderColor = selectedUiTheme.border;
-            if (footerText) footerText.style.color = selectedUiTheme.text;
-            footerButtons.forEach(button => {
-                button.style.backgroundColor = selectedUiTheme.buttonBg;
-                button.style.color = selectedUiTheme.text;
-                button.style.borderColor = selectedUiTheme.border;
-            });
-        }
-        if (mainReaderArea) {
-            mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
-        }
-        if (contents) {
-            const oldStyle = contents.document.getElementById('theme-style');
-            if (oldStyle) oldStyle.remove();
-        
-            if (currentTheme !== 'claro') {
-                const style = contents.document.createElement('style');
-                style.id = 'theme-style';
-        
-                let themeStyles = `
-                    body {
-                        background-color: ${selectedBookTheme.bg} !important;
-                        color: ${selectedBookTheme.text} !important;
-                    }
-                    p, a, h1, h2, h3, h4, h5, h6, li, span {
-                        color: ${selectedBookTheme.text} !important;
-                    }
-                `;
-        
-                if (currentTheme === 'noturno') {
-                    themeStyles += `
-                        .expediente *, .sumario *, .toc *, .credits *, .sumario-secao * {
-                            color: #1E1E1E !important;
+            if (footer) {
+                footer.style.backgroundColor = selectedUiTheme.bg;
+                footer.style.borderColor = selectedUiTheme.border;
+                if (footerText) footerText.style.color = selectedUiTheme.text;
+                footerButtons.forEach(button => {
+                    button.style.backgroundColor = selectedUiTheme.buttonBg;
+                    button.style.color = selectedUiTheme.text;
+                    button.style.borderColor = selectedUiTheme.border;
+                });
+            }
+            if (mainReaderArea) {
+                mainReaderArea.style.backgroundColor = selectedBookTheme.bg;
+            }
+            if (contents) {
+                const oldStyle = contents.document.getElementById('theme-style');
+                if (oldStyle) oldStyle.remove();
+
+                if (currentTheme !== 'claro') {
+                    const style = contents.document.createElement('style');
+                    style.id = 'theme-style';
+
+                    let themeStyles = `
+                        body {
+                            background-color: ${selectedBookTheme.bg} !important;
+                            color: ${selectedBookTheme.text} !important;
+                        }
+                        p, a, h1, h2, h3, h4, h5, h6, li, span {
+                            color: ${selectedBookTheme.text} !important;
                         }
                     `;
+
+                    if (currentTheme === 'noturno') {
+                        themeStyles += `
+                            .expediente *, .sumario *, .toc *, .credits *, .sumario-secao * {
+                                color: #1E1E1E !important;
+                            }
+                        `;
+                    }
+
+                    style.innerHTML = themeStyles;
+                    contents.document.head.appendChild(style);
                 }
-        
-                style.innerHTML = themeStyles;
-                contents.document.head.appendChild(style);
             }
         }
-    }
 
         if (btnLerLivro) btnLerLivro.innerHTML = ICON_PLAY;
 
@@ -636,14 +655,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     rendicao.annotations.underline(ann.cfi, { note: ann.note }, (e) => { }, "underline", { "stroke": "blue" });
                 }
             });
+
+            if (currentSearchHighlightCfi) {
+                rendicao.annotations.highlight(currentSearchHighlightCfi, {}, (e) => { }, "search-highlight", { "fill": "orange", "fill-opacity": "0.5", "stroke": "orange" });
+                setTimeout(() => {
+                    const contents = rendicao.getContents()[0];
+                    if (contents) {
+                        const highlightElement = contents.document.querySelector('g.search-highlight');
+                        if (highlightElement) {
+                            highlightElement.style.display = 'block';
+                        }
+                    }
+                }, 10);
+            }
         }
 
         if (btnToggleSidebar) {
             btnToggleSidebar.addEventListener('click', () => {
-                const body = document.body;
-                const isCollapsed = body.classList.contains('sidebar-collapsed');
                 document.body.classList.add('sidebar-collapsed');
-                btnToggleSidebar.setAttribute('title', isCollapsed ? 'Ocultar Sumário' : 'Mostrar Sumário');
                 setTimeout(() => { if (rendicao) rendicao.resize(); }, 400);
             });
         }

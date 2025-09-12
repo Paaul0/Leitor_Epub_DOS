@@ -145,7 +145,7 @@ header {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%2Bxmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%2Bwidth%3D%22292.4%22%2Bheight%3D%22292.4%22%3E%3Cpath%2Bfill%3D%22%23666%22%2Bd%3D%22M287%2B69.4a17.6%2B17.6%2B0%2B0%2B0-13-5.4H18.4c-5%2B0-9.3%2B1.8-12.9%2B5.4A17.6%2B17.6%2B0%2B0%2B0%2B0%2B82.2c0%2B5%2B1.8%2B9.3%2B5.4%2B12.9l128%2B127.9c3.6%2B3.6%2B7.8%2B5.4%2B12.8%2B5.4s9.2-1.8%2B12.8-5.4L287%2B95c3.5-3.5%2B5.4-7.8%2B5.4-12.8%2B0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
     background-repeat: no-repeat;
     background-position: right .7em top 50%, 0 0;
     background-size: .65em auto, 100%;
@@ -266,7 +266,8 @@ header {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
     
     display: flex;
-    align-items: center; /* Alinha o botão de recolher com as ferramentas */
+    flex-direction: column; 
+    align-items: center; 
     transition: opacity 0.2s ease-in-out;
 }
 
@@ -275,7 +276,7 @@ header {
     background-color: transparent;
     border: none;
     padding: 8px;
-    margin-right: 4px; /* Espaço entre o botão e as ferramentas */
+    margin-bottom: 4px; 
     cursor: pointer;
     line-height: 0;
     border-radius: 6px;
@@ -284,7 +285,8 @@ header {
 #btn-toggle-fixed-menu img {
     width: 22px;
     height: 22px;
-    transition: transform 0.3s ease; /* Animação de rotação */
+    transition: transform 0.3s ease;
+    transform: rotate(-90deg);
 }
 
 #btn-toggle-fixed-menu:hover {
@@ -294,6 +296,7 @@ header {
 /* Container que agrupa os botões de ferramentas */
 .menu-tools {
     display: flex;
+    flex-direction: column; 
     gap: 4px;
 }
 
@@ -323,7 +326,7 @@ header {
 }
 
 #fixed-context-menu.collapsed #btn-toggle-fixed-menu img {
-    transform: rotate(180deg); /* Gira o ícone para indicar "expandir" */
+    transform: rotate(90deg);
 }
 
 /* Estado padrão: INATIVO (quando nenhum texto está selecionado) 
@@ -332,23 +335,35 @@ header {
     pointer-events: none;
 }*/
 
-/* --- Estilos para a Barra de Pesquisa (MODIFICADO COM TEMA CLARO) --- */
+
+/* --- NOVOS ESTILOS PARA A BARRA DE PESQUISA COM ANIMAÇÃO --- */
 #search-bar {
-    position: absolute;
-    background-color: #FFFFFF; 
-    padding: 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
-    z-index: 1001;
-    border-radius: 8px;
-    border: 1px solid #ddd; 
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 280px;
+    
+    /* MUDANÇA: Estilos de card restaurados (sem a sombra) */
+    background-color: #FFFFFF;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    
+    
+    /* Propriedades para a animação */
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    padding: 0 15px;
+    margin-top: 0;
+    visibility: hidden;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, padding 0.4s ease-in-out, margin-top 0.4s ease-in-out, visibility 0.4s;
 }
 
 #search-bar.visible {
-    display: flex;
+    max-height: 200px; /* Um valor maior que a altura real do conteúdo */
+    opacity: 1;
+    visibility: visible;
+    padding: 15px; /* Ajustado para não ter padding lateral no container */
+    margin-top: 10px; /* Adiciona um espaço do botão de pesquisa acima */
 }
 
 #search-input {
@@ -383,7 +398,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 93%;
+    width: 90%;
 }
 
 #search-nav-controls {
@@ -702,26 +717,47 @@ input[type="range"] {
     font-weight: bold;
 }
 
+/* NOVO: Estilo para botões desabilitados no painel de notas */
+#panel-notas button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.kindle-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #FFFFFF;
+    color: #333333;
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.kindle-button:hover {
+    background-color: #E8E8E8;
+}
+
 .infos {
     display: flex;
     flex-direction: column;
     padding: 10px;
-    height: 160px;
+    height: auto; 
     border-bottom: 1px solid #ddd;
     flex-shrink: 0; 
 }
 
 
 .info_liv {
-    width: 100%; /* Ocupa a largura total */
-    height: auto; /* A altura será controlada pelo flexbox */
-    
-    /* --- MUDANÇAS COM FLEXBOX --- */
-    flex-grow: 1; /* Faz este elemento crescer e ocupar o espaço restante */
+    width: 100%;
+    height: auto;
+    padding-top: 3%;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centraliza o conteúdo (título, autor) verticalmente */
-    overflow: hidden; /* Garante que o conteúdo não vaze */
+    justify-content: center;
+    overflow: hidden;
 }
 
 /* Ajustes no texto para garantir que ele não quebre o layout */
@@ -757,23 +793,21 @@ input[type="range"] {
 }
 
 .titulo {
-    grid-area: header; /* Mantém a área do grid que você já definiu */
-    height: 27px;      /* << Defina a altura que desejar. Ex: 50px */
-    padding: 0 15px;   /* Adiciona um espaçamento nas laterais */
-    /* Centraliza o título verticalmente e horizontalmente */
+    grid-area: header; 
+    height: 27px;      
+    padding: 0 15px;   
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* Garante que o texto não saia para fora */
+    overflow: hidden; 
 }
 
 .titulo p {
-    margin: 0; /* Remove a margem padrão do parágrafo */
-    font-size: 16px; /* Opcional: ajuste o tamanho da fonte */
+    margin: 0; 
+    font-size: 16px; 
     font-weight: bold;
     color: #333;
 
-    /* Impede que títulos longos quebrem o layout */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -783,14 +817,13 @@ input[type="range"] {
 
 /* Estilo para o novo botão flutuante */
 #btn-show-sidebar {
-    position: fixed; /* Posição fixa na tela */
+    position: fixed; 
     top: 15px;
     left: 15px;
-    z-index: 2000; /* Garante que ele fique acima de outros elementos */
+    z-index: 2000; 
 
-    display: none; /* ESCONDIDO POR PADRÃO */
+    display: none; 
 
-    /* Estilos visuais (pode copiar de outros botões) */
     width: 40px;
     height: 35px;
     border: none;
@@ -798,7 +831,7 @@ input[type="range"] {
     background-color: #f2f2f2;
     border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra para destacar */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
 }
 
 #btn-show-sidebar:hover {
@@ -814,15 +847,15 @@ body.sidebar-collapsed #btn-show-sidebar {
 
 /* O contêiner do overlay (fundo escuro) */
 .lightbox {
-    display: none; /* Escondido por padrão */
-    position: fixed; /* Fica sobre todo o conteúdo */
-    z-index: 3000; /* Garante que fique na frente de tudo */
+    display: none; 
+    position: fixed; 
+    z-index: 3000; 
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Permite scroll se a imagem for muito grande */
-    background-color: rgba(0, 0, 0, 0.85); /* Fundo preto semitransparente */
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.85); 
     justify-content: center;
     align-items: center;
 }
@@ -833,7 +866,7 @@ body.sidebar-collapsed #btn-show-sidebar {
     display: block;
     max-width: 90%;
     max-height: 90vh;
-    animation: zoom 0.4s; /* Animação de zoom */
+    animation: zoom 0.4s; 
 }
 
 /* Animação de zoom */

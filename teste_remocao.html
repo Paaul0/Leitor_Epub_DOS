@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Diagnóstico - CORRIGIDO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; }
+        #leitor { width: 80%; height: 80vh; margin: 20px auto; border: 1px solid #ccc; }
+        #status { font-size: 1.2em; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Diagnóstico de Remoção de Grifo</h1>
+    <div id="leitor"></div>
+    <p id="status">Carregando livro e gerando localizações...</p>
+
+    <script>
+        const EPUB_PATH = "Epubs/moby-dick.epub";
+        const leitorDiv = document.getElementById('leitor');
+        const statusDiv = document.getElementById('status');
+
+        const livro = ePub(EPUB_PATH); // Não precisa do JSZip aqui
+        const rendicao = livro.renderTo(leitorDiv, { width: "100%", height: "100%" });
+
+        let cfiParaGrifar;
+
+        // --- LÓGICA CORRIGIDA ---
+        // 1. Espera o livro estar pronto
+        livro.ready.then(() => {
+            statusDiv.textContent = "Livro pronto. Gerando mapa de localizações...";
+            console.log("Livro pronto. Gerando localizações...");
+            // 2. Espera as localizações serem calculadas
+            return livro.locations.generate(1000); 
+        }).then(locations => {
+            statusDiv.textContent = "Localizações prontas! Exibindo página para o teste...";
+            console.log("Localizações geradas com sucesso.");
+            
+            // 3. Agora que temos as localizações, podemos usá-las
+            // Vamos pegar uma localização um pouco mais para frente no livro para o teste
+            cfiParaGrifar = locations[10] || locations[0]; 
+            console.log("CFI que será usado para o grifo:", cfiParaGrifar);
+            
+            // 4. Exibe a página onde o grifo será adicionado
+            return rendicao.display(cfiParaGrifar);
+        }).then(() => {
+            statusDiv.textContent = "Página exibida. Adicionando grifo em 3 segundos...";
+            console.log("Página do teste exibida. Agendando adição de grifo.");
+            // 5. Agenda a adição do grifo
+            setTimeout(adicionarGrifo, 3000);
+        });
+        
+        // As funções de adicionar e remover continuam as mesmas
+        function adicionarGrifo() {
+            statusDiv.textContent = "Adicionando grifo laranja...";
+            console.log("--- ADICIONANDO GRIFO ---");
+            rendicao.annotations.highlight(
+                cfiParaGrifar, 
+                {}, 
+                (e) => {}, 
+                "teste-highlight", 
+                { "fill": "orange" }
+            );
+            statusDiv.textContent = "Grifo adicionado. Tentando remover em 5 segundos...";
+            setTimeout(removerGrifo, 5000);
+        }
+
+        function removerGrifo() {
+            statusDiv.textContent = "Tentando remover o grifo...";
+            console.log("--- TENTANDO REMOVER O GRIFO ---");
+
+            console.log("Tentativa: Removendo por tipo ('teste-highlight')...");
+            rendicao.annotations.remove(null, "teste-highlight");
+
+            setTimeout(() => {
+                const svgHighlight = rendicao.getContents()[0].document.querySelector('g.teste-highlight');
+                if (svgHighlight) {
+                    console.error("FALHA: O grifo AINDA EXISTE no DOM.");
+                    statusDiv.textContent = "FALHA na remoção! O grifo não foi removido.";
+                } else {
+                    console.log("SUCESSO: O grifo foi removido do DOM.");
+                    statusDiv.textContent = "SUCESSO! O grifo foi removido corretamente!";
+                }
+            }, 1000);
+        }
+
+    </script>
+</body>
+</html>
