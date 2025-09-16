@@ -1,0 +1,805 @@
+/* ==========================================================================
+   Layout Principal e Sidebar
+   ========================================================================== */
+body {
+    display: grid;
+    grid-template-areas:
+        "sidebar header"
+        "sidebar main"
+        "sidebar footer";
+    grid-template-columns: 288px 1fr;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    margin: 0;
+    font-family: sans-serif;
+    transition: grid-template-columns 0.4s ease;
+}
+
+body.sidebar-collapsed {
+    grid-template-columns: 0px 1fr;
+}
+
+body.sidebar-collapsed .sidebar-completa {
+    visibility: hidden;
+    overflow: hidden;
+    padding: 0;
+    border-right: none;
+}
+
+.sidebar-completa {
+    grid-area: sidebar;
+    background-color: #F2F2F2;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.infos {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    height: auto;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+.home {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.conf {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.info_liv {
+    width: 100%;
+    height: auto;
+    padding-top: 3%;
+    padding-left: 4%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.info_liv p {
+    margin: 0 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info_liv .book-title {
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.info_liv .book-author,
+.info_liv .book-publisher {
+    font-size: 0.9em;
+    color: #555;
+}
+
+#btn-show-sidebar {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    display: none;
+    width: 40px;
+    height: 35px;
+    border: none;
+    padding: 0;
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+body.sidebar-collapsed #btn-show-sidebar {
+    display: block;
+}
+
+#btn-show-sidebar:hover {
+    background-color: #C7C7C7;
+}
+
+
+/* ==========================================================================
+   Componentes da Sidebar (Sumário e Rodapé do Sumário)
+   ========================================================================== */
+.toc {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+#sumario-container {
+    overflow-y: auto;
+    padding: 10px;
+}
+
+#sumario-container ul {
+    list-style-type: none;
+    padding: 0 10px;
+    margin: 0;
+    background-color: #F2F2F2;
+}
+
+#sumario-container a {
+    display: block;
+    padding: 8px 5px;
+    text-decoration: none;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+#sumario-container a:hover {
+    background-color: #E0E0E0;
+    border-radius: 10px;
+}
+
+.toc-footer {
+    height: 56px;
+    justify-content: center;
+    background-color: #F2F2F2;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 15px;
+    padding: 0 10px;
+    place-items: center;
+}
+
+.toc-footer .btn {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toc-footer .btn img {
+    width: 30px;
+    height: 30px;
+}
+
+#speech-speed-control {
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%2Bxmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%2Bwidth%3D%22292.4%22%2Bheight%3D%22292.4%22%3E%3Cpath%2Bfill%3D%22%23666%22%2Bd%3D%22M287%2B69.4a17.6%2B17.6%2B0%2B0%2B0-13-5.4H18.4c-5%2B0-9.3%2B1.8-12.9%2B5.4A17.6%2B17.6%2B0%2B0%2B0%2B0%2B82.2c0%2B5%2B1.8%2B9.3%2B5.4%2B12.9l128%2B127.9c3.6%2B3.6%2B7.8%2B5.4%2B12.8%2B5.4s9.2-1.8%2B12.8-5.4L287%2B95c3.5-3.5%2B5.4-7.8%2B5.4-12.8%2B0-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right .7em top 50%, 0 0;
+    background-size: .65em auto, 100%;
+    padding-right: 2em;
+}
+
+/* Scrollbars */
+.toc::-webkit-scrollbar,
+#sumario-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.toc::-webkit-scrollbar-thumb,
+#sumario-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+
+/* ==========================================================================
+   Header (Título) e Footer (Progresso)
+   ========================================================================== */
+.titulo {
+    grid-area: header;
+    height: 27px;
+    padding: 0 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f2f2f2;
+}
+
+.titulo p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.progresso {
+    grid-area: footer;
+    border-top: 1px solid #ccc;
+    padding: 5px;
+}
+
+.navegacao {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+}
+
+.navegacao button {
+    padding: 3px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+.navegacao button:hover {
+    background-color: #e0e0e0;
+}
+
+#progresso-info {
+    font-size: 14px;
+    color: #555;
+}
+
+
+/* ==========================================================================
+   Área Principal do Leitor
+   ========================================================================== */
+.leitor {
+    grid-area: main;
+    overflow: hidden;
+}
+
+#leitor {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+
+/* ==========================================================================
+   Menu Fixo de Contexto (Grifar, Copiar, etc.)
+   ========================================================================== */
+#fixed-context-menu {
+    position: fixed;
+    top: 60px;
+    right: 15px;
+    z-index: 2000;
+    background-color: #FFFFFF;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.2s ease-in-out;
+}
+
+#btn-toggle-fixed-menu {
+    background-color: transparent;
+    border: none;
+    padding: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    line-height: 0;
+    border-radius: 6px;
+}
+
+#btn-toggle-fixed-menu img {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.3s ease;
+    transform: rotate(-90deg);
+}
+
+#btn-toggle-fixed-menu:hover {
+    background-color: #eaf2ff;
+}
+
+.menu-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-tools button {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 0;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.menu-tools button:hover {
+    background-color: #eaf2ff;
+    border-color: #a9c7f5;
+}
+
+.menu-tools button img {
+    width: 22px;
+    height: 22px;
+}
+
+/* Estado recolhido */
+#fixed-context-menu.collapsed .menu-tools {
+    display: none;
+}
+
+#fixed-context-menu.collapsed #btn-toggle-fixed-menu img {
+    transform: rotate(90deg);
+}
+
+
+/* ==========================================================================
+   Barra de Pesquisa
+   ========================================================================== */
+#search-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #FFFFFF;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    padding: 0 15px;
+    margin-top: 0;
+    visibility: hidden;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, padding 0.4s ease-in-out, margin-top 0.4s ease-in-out, visibility 0.4s;
+}
+
+#search-bar.visible {
+    max-height: 200px;
+    opacity: 1;
+    visibility: visible;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.search-main-controls,
+#search-nav-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+}
+
+#search-input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #EFEFEF;
+    color: #333;
+}
+
+#close-search-btn {
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent;
+    color: #888;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: flex-end;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    transition: background-color 0.2s;
+}
+
+#close-search-btn:hover {
+    background-color: #E0E0E0;
+}
+
+#search-nav-controls {
+    background-color: #EFEFEF;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+#search-results-info {
+    font-size: 13px;
+    color: #555;
+}
+
+.search-buttons button {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.search-buttons button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+
+.search-buttons button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+
+/* ==========================================================================
+   Menu Modal (Configurações, Sumário, Notas)
+   ========================================================================== */
+#menu-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    justify-content: center;
+    align-items: center;
+}
+
+#menu-modal.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.menu-modal-content {
+    background-color: #F2F2F2;
+    color: #333333;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background-color: #E8E8E8;
+    flex-shrink: 0;
+    border-bottom: 1px solid #D1D1D1;
+}
+
+.menu-header .back-btn {
+    background: none;
+    border: none;
+    color: #333333;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.menu-header .chapter-title {
+    font-weight: bold;
+    text-align: center;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 10px;
+}
+
+.menu-header .tool-buttons button {
+    background: none;
+    border: none;
+    color: #333333;
+    font-size: 22px;
+    cursor: pointer;
+    margin-left: 15px;
+}
+
+.menu-tabs {
+    display: flex;
+    justify-content: space-around;
+    background-color: #E8E8E8;
+    flex-shrink: 0;
+}
+
+.menu-tab-btn {
+    background: none;
+    border: none;
+    color: #888888;
+    padding: 15px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    flex-grow: 1;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.menu-tab-btn.active {
+    color: #007AFF;
+    border-bottom-color: #007AFF;
+}
+
+.menu-panels {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.menu-panel {
+    display: none;
+}
+
+.menu-panel.active {
+    display: block;
+}
+
+.setting-group {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #D1D1D1;
+    padding-bottom: 25px;
+}
+
+.setting-group:last-child {
+    border-bottom: none;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #555555;
+}
+
+.font-size-control,
+.theme-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.font-size-control button {
+    border-radius: 50%;
+    border: 1px solid #CCCCCC;
+    background-color: #FFFFFF;
+    color: #333333;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.font-slider-wrapper {
+    flex-grow: 1;
+    padding: 0 15px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+.font-select-control select {
+    width: 100%;
+    padding: 10px;
+    background-color: #FFFFFF;
+    color: #333333;
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+}
+
+.layout-control {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+}
+
+.layout-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.theme-control .theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    color: #555;
+}
+
+.theme-control input[type="radio"] {
+    display: none;
+}
+
+.theme-control .theme-preview {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #CCCCCC;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.theme-preview.light {
+    background-color: #fff;
+}
+
+.theme-preview.sepia {
+    background-color: #fbf0d9;
+}
+
+.theme-preview.night {
+    background-color: #000;
+}
+
+.theme-control input[type="radio"]:checked+.theme-preview {
+    border-color: #007AFF;
+}
+
+#panel-sumario ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#panel-sumario a {
+    display: block;
+    padding: 15px 10px;
+    color: #333333;
+    text-decoration: none;
+    border-bottom: 1px solid #D1D1D1;
+}
+
+#panel-sumario a:hover {
+    background-color: #E8E8E8;
+}
+
+.note-item {
+    border-bottom: 1px solid #D1D1D1;
+    padding: 15px 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.note-item:last-child {
+    border-bottom: none;
+}
+
+.note-item:hover {
+    background-color: #E8E8E8;
+}
+
+.note-item .note-text {
+    font-style: italic;
+    color: #555;
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.note-item .note-comment {
+    font-size: 1em;
+    color: #333;
+    margin: 0;
+    font-weight: bold;
+}
+
+#panel-notas button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.kindle-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #FFFFFF;
+    color: #333333;
+    border: 1px solid #CCCCCC;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.kindle-button:hover {
+    background-color: #E8E8E8;
+}
+
+
+/* ==========================================================================
+   Lightbox de Imagem
+   ========================================================================== */
+.lightbox {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85);
+    justify-content: center;
+    align-items: center;
+}
+
+.lightbox-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90vh;
+    animation: zoom 0.4s;
+}
+
+@keyframes zoom {
+    from {
+        transform: scale(0.5)
+    }
+    to {
+        transform: scale(1)
+    }
+}
+
+.close-lightbox {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-lightbox:hover,
+.close-lightbox:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+
+
+/* ==========================================================================
+   Estilos Gerais e Utilitários
+   ========================================================================== */
+.btn {
+    border: none;
+    padding: 0;
+    width: 40px;
+    height: 35px;
+    background: none;
+}
+
+.btn:hover {
+    background-color: #C7C7C7;
+    border-radius: 8px;
+}

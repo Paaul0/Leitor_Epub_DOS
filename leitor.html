@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/leitor.css">
+    <title>Leitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+
+<body>
+    <div id="fixed-context-menu">
+        <button id="btn-toggle-fixed-menu" title="Recolher menu">
+            <img
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtNTYwLTMyMC01Ni01NiAxNDQtMTQ0LTE0NC0xNDQgNTYtNTYgMjAwIDIwMC0yMDAgMjAwWiIvPjwvc3ZnPg==">
+        </button>
+
+        <div class="menu-tools">
+            <button id="fixed-highlight-btn" title="Grifar"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzgwLTQwMGg2MHYtMTIwaDE4MGwtNjAtODAgNjAtODBIMzgwdjI4MFpNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni45VDI4MC04NDBoNDAwcTMzIDAgNTYuNSAyMy41VDc2MC03NjB2NjQwTDQ4MC0yNDAgMjAwLTEyMFptODAtMTIyIDIwMC04NiAyMDAgODZ2LTUxOEgyODB2NTE4Wm0wLTUxOGg0MDAtNDAwWiIvPjwvc3ZnPg=="></button>
+            <button id="fixed-copy-btn" title="Copiar"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4="></button>
+            <button id="fixed-anotar-btn" title="Anotar"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjAwLTEyMHYtNjQwcTAtMzMgMjMuNS01Ni41VDI4MC04NDBoMjQwdjgwSDI4MHY1MThsMjAwLTg2IDIwMCA4NnYtMjc4aDgwdjQwMEw0ODAtMjQwIDIwMC0xMjBabTgwLTY0MGgyNDAtMjQwWm00MDAgMTYwdi04MGgtODB2LTgwaDgwdi04MGg4MHY4MGg4MHY4MGgtODB2ODBoLTgwWiIvPjwvc3ZnPg=="></button>
+            <button id="fixed-dicio-btn" title="Dicionário"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptLTQwLTgydi03OHEtMzMgMC01Ni41LTIzLjVUMzYwLTMyMHYtNDBMMTY4LTU1MnEtMyAxOC01LjUgMzZ0LTIuNSAzNnEwIDEyMSA3OS41IDIxMlQ0NDAtMTYyWm0yNzYtMTAycTQxLTQ1IDYyLjUtMTAwLjVUODAwLTQ4MHEwLTk4LTU0LjUtMTc5VDYwMC03NzZ2MTZxMCAzMy0yMy41IDU2LjVUNTIwLTY4MGgtODB2ODBxMCAxNy0xMS41IDI4LjVUNDAwLTU2MGgtODB2ODBoMjQwcTE3IDAgMjguNSAxMS41VDYwMC00NDB2MTIwaDQwcTI2IDAgNDcgMTUuNXQyOSA0MC41WiIvPjwvc3ZnPg=="></button>
+            <button id="fixed-audio-btn" title="Ler trecho"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ty41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg=="></button>
+        </div>
+    </div>
+    <button class="btn" id="btn-show-sidebar" title="Mostrar Sumário">
+        <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTI0MHYtODBoMjQwdjgwSDEyMFptMC0yMDB2LTgwaDQ4MHY4MEgxMjBabTAtMjAwdi04MGg3MjB2ODBIMTIwWiIvPjwvc3ZnPg==">
+    </button>
+    <header class="titulo">
+        <p>Carregando livro...</p>
+    </header>
+    <aside class="sidebar-completa">
+        <div class="infos">
+            <div class="home">
+                <button class="btn" id="btn-toggle-sidebar" title="Ocultar Sumário">
+                    <img
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTI0MHYtODBoNTIwdjgwSDEyMFptNjY0LTQwTDU4NC00ODBsMjAwLTIwMCA1NiA1Ni0xNDQgMTQ0IDE0NCAxNDQtNTYgNTZaTTEyMC00NDB2LTgwaDQwMHY4MEgxMjBabTAtMjAwdi04MGg1MjB2ODBIMTIwWiIvPjwvc3ZnPg==">
+                </button>
+                <div class="conf">
+                    <button class="btn" id="btn-search" title="Pesquisar"><img
+                            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNzg0LTEyMCA1MzItMzcycS0zMCAyNC02OSAzOHQtODMgMTRxLTEwOSAwLTE4NC41LTc1LjVUMTIwLTU4MHEwLTEwOSA3NS41LTE4NC41VDM4MC04NDBxMTA5IDAgMTg0LjUgNzUuNVQ2NDAtNTgwcTAgNDQtMTQgODN0LTM4IDY5bDI1MiAyNTItNTYgNTZaTTM4MC00MDBxNzUgMCAxMjcuNS01Mi41VDU2MC01ODBxMC03NS01Mi41LTEyNy41VDM4MC03NjBxLTc1IDAtMTI3LjUgNTIuNVQyMDAtNTgwcTAgNzUgNTIuNSAxMjcuNVQzODAtNDAwWiIvPjwvc3ZnPg=="></button>
+                    <button class="btn" id="btn-menu" title="Menu"><img
+                            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtMzcwLTgwLTE2LTEyOHEtMTMtNS0yNC41LTEyVDMwNy0yMzVsLTExOSA1MEw3OC0zNzVsMTAzLTc4cS0xLTctMS0xMy41di0yN3EwLTYuNSAxLTEzLjVMNzgtNTg1bDExMC0xOTAgMTE5IDUwcTExLTggMjMtMTV0MjQtMTJsMTYtMTI4aDIyMGwxNiAxMjhxMTMgNSAyNC41IDEydDIyLjUgMTVsMTE5LTUwIDExMCAxOTAtMTAzIDc4cTEgNyAxIDEzLjV2MjdxMCA2LjUtMiAxMy41bDEwMyA3OC0xMTAgMTkwLTExOC01MHEtMTEgOC0yMyAxNXQtMjQgMTJMNTkwLTgwSDM3MFptNzAtODBoNzlsMTQtMTA2cTMxLTggNTcuNS0yMy41VDYzOS0zMjdsOTkgNDEgMzktNjgtODYtNjVxNS0xNCA3LTI5LjV0Mi0zMS41cTAtMTYtMi0zMS41dC03LTI5LjVsODYtNjUtMzktNjgtOTkgNDJxLTIyLTIzLTQ4LjUtMzguNVQ1MzMtNjk4bC0xMy0xMDZoLTc5bC0xNCAxMDZxLTMxIDgtNTcuNSAyMy41VDMyMS02MzNsLTk5LTQxLTM5IDY4IDg2IDY0cS01IDE1LTcgMzB0LTIgMzJxMCAxNiAyIDMxdDcgMzBsLTg2IDY1IDM5IDY4IDk5LTQycTIyIDIzIDQ4LjUgMzguNVQ0MjctMjY2bDEzIDEwNlptNDItMTgwcTU4IDAgOTktNDF0NDEtOTlxMC01OC00MS05OXQtOTktNDFxLTU5IDAtOTkuNSA0MVQzNDItNDgwcTAgNTggNDAuNSA5OXQ5OS41IDQxWm0tMi0xNDBaIi8+PC9zdmc+"></button>
+                </div>
+            </div>
+            <div id="search-bar">
+                <div class="search-main-controls">
+                    <input type="text" id="search-input" placeholder="Pesquisar no livro...">
+                    <button id="close-search-btn">X</button>
+                </div>
+                <div id="search-nav-controls">
+                    <span id="search-results-info"></span>
+                    <div class="search-buttons">
+                        <button id="search-prev-btn" title="Resultado anterior" disabled>&lt;</button>
+                        <button id="search-next-btn" title="Próximo resultado" disabled>&gt;</button>
+                    </div>
+                </div>
+            </div>
+            <div class="info_liv">
+            </div>
+        </div>
+        <div class="toc">
+            <div id="sumario-container"></div>
+            <div class="toc-footer">
+                <button class="btn" id="btn-ler-livro" title="Ler o livro em voz alta">
+                </button>
+                <select id="speech-speed-control" title="Velocidade da Leitura">
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1x (Normal)</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+    <main class="leitor">
+        <div id="leitor"></div>
+    </main>
+    <footer class="progresso">
+        <div class="navegacao"><button id="anterior"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNDAwLTI0MCAxNjAtNDgwbDI0MC0yNDAgNTYgNTgtMTQyIDE0Mmg0ODZ2ODBIMzE0bDE0MiAxNDItNTYgNThaIi8+PC9zdmc+"
+                    alt="arrow_left_alt"></button><span id="progresso-info"></span><button id="proximo"><img
+                    src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtNTYwLTI0MC01Ni01OCAxNDItMTQySDE2MHYtODBoNDg2TDUwNC02NjJsNTYtNTggMjQwIDI0MC0yNDAgMjQwWiIvPjwvc3ZnPg=="
+                    alt="arrow_right_alt"></button></div>
+    </footer>
+
+    <div id="menu-modal">
+        <div class="menu-modal-content">
+            <header class="menu-header">
+                <button class="back-btn" id="close-menu-modal-btn">←</button>
+                <span class="chapter-title" id="menu-chapter-title">Título do Capítulo</span>
+                <div class="tool-buttons">
+                    <button>Aa</button>
+                    <button>🔍</button>
+                    <button>🔖</button>
+                </div>
+            </header>
+            <div class="menu-tabs">
+                <button class="menu-tab-btn active" data-target="panel-sumario">Sumário</button>
+                <button class="menu-tab-btn" data-target="panel-exibicao">Exibição</button>
+                <button class="menu-tab-btn" data-target="panel-notas">Notas</button>
+            </div>
+            <div class="menu-panels">
+                <div class="menu-panel active" id="panel-sumario"></div>
+                <div class="menu-panel" id="panel-exibicao">
+                    <div class="setting-group">
+                        <label>Tamanho da Fonte</label>
+                        <div class="font-size-control">
+                            <button id="decrease-font">-</button>
+                            <div class="font-slider-wrapper"><input type="range" id="font-size-slider" min="80"
+                                    max="200" value="100" step="10"></div>
+                            <button id="increase-font">+</button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Layout da Página</label>
+                        <div class="layout-control">
+                            <label class="layout-option">
+                                <input type="radio" name="layout" value="none" checked> Página Única
+                            </label>
+                            <label class="layout-option">
+                                <input type="radio" name="layout" value="auto"> Página Dupla
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="font-select">Fonte</label>
+                        <div class="font-select-control">
+                            <select id="font-select">
+                                <option value="Original">Original</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Literata">Literata</option>
+                                <option value="Merriweather">Merriweather (similar à Bookerly)</option>
+                                <option value="Open Sans">Open Sans (Sans-Serif)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Tema de Cores</label>
+                        <div class="theme-control">
+                            <label class="theme-option"><input type="radio" name="theme" value="claro" checked>
+                                <div class="theme-preview light"></div>Claro
+                            </label>
+                            <label class="theme-option"><input type="radio" name="theme" value="sepia">
+                                <div class="theme-preview sepia"></div>Sépia
+                            </label>
+                            <label class="theme-option"><input type="radio" name="theme" value="noturno">
+                                <div class="theme-preview night"></div>Noturno
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>Modo de Leitura</label>
+                        <div>
+                           <button id="btn-kindle-exibicao" class="kindle-button">Enviar para o Kindle</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-panel" id="panel-notas">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script type="module" src="js/leitor.js"></script>
+
+    <div id="image-lightbox" class="lightbox">
+        <span class="close-lightbox" title="Fechar">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+    </div>
+
+</body>
+
+</html>
