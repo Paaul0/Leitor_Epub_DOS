@@ -1,10 +1,11 @@
 /**
  * annotations.js
- * Módulo para gerenciar anotações, grifos e interações com o texto selecionado.
+ * Módulo para gerenciar anotações e grifos na sessão atual.
+ * VERSÃO 12.0 - Lógica final sem remoção e com verificação estrita para evitar sobreposição de opacidade.
  */
 
 import { rendicao } from './epubService.js';
-import { readAloud } from './textToSpeech.js'; // Importa a função de ler trecho
+import { readAloud } from './textToSpeech.js';
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
@@ -18,36 +19,117 @@ const btnDictionaryFixed = document.getElementById('fixed-dicio-btn');
 const btnAudioFixed = document.getElementById('fixed-audio-btn');
 
 // ==========================================================================
-// Estado do Módulo (Exportado para que outros módulos possam ler)
+// Estado do Módulo (Apenas em Memória)
 // ==========================================================================
-export let savedAnnotations = [];
+export let savedAnnotations = []; // As anotações existem apenas enquanto a página estiver aberta.
 let lastCfiRange = null;
 let lastSelectedText = "";
 
 // ==========================================================================
-// Funções Exportadas
+// Funções Principais de Manipulação de Anotações
 // ==========================================================================
 
-export function reaplicarAnotacoes() {
-    // Remove anotações antigas para não duplicar
-    rendicao.annotations.remove(null, "highlight");
-    rendicao.annotations.remove(null, "underline");
+/**
+ * Adiciona uma nova anotação, prevenindo duplicatas exatas.
+ * @param {'highlight' | 'annotation'} type - O tipo de anotação.
+ * @param {string} [note] - O texto da nota, se houver.
+ */
+function addAnnotation(type, note = '') {
+    if (!lastCfiRange || !lastSelectedText) return;
 
+    // VERIFICAÇÃO ANTI-EMPILHAMENTO: Converte o CFI para string para uma comparação fiável.
+    const cfiString = lastCfiRange.toString();
+    const isAlreadyAnnotated = savedAnnotations.some(ann => ann.cfi.toString() === cfiString);
+
+    // Se a anotação já existe, ignora a nova e apenas limpa a seleção.
+    if (isAlreadyAnnotated) {
+        clearSelection();
+        return;
+    }
+
+    const newAnnotation = {
+        cfi: lastCfiRange,
+        text: lastSelectedText,
+        type: type,
+        note: note
+    };
+
+    // 1. Adiciona a nova anotação aos dados da sessão.
+    savedAnnotations.push(newAnnotation);
+
+    // 2. Desenha APENAS a nova anotação na tela.
+    drawAnnotation(newAnnotation);
+
+    // 3. Limpa a seleção de texto do usuário.
+    clearSelection();
+}
+
+/**
+ * Desenha uma única anotação na tela, sem a funcionalidade de clique para remover.
+ * @param {object} ann - O objeto da anotação.
+ */
+function drawAnnotation(ann) {
+    const style = ann.type === 'highlight'
+        ? { "fill": "yellow", "fill-opacity": "0.3" }
+        : { "stroke": "blue", "stroke-width": "2px", "stroke-dasharray": "5, 3" };
+    const method = ann.type === 'highlight' ? 'highlight' : 'underline';
+
+    // O handler de clique foi removido. Clicar no grifo não faz mais nada.
+    rendicao.annotations[method](ann.cfi, {}, () => {}, "epubjs-annotation", style);
+}
+
+/**
+ * Limpa a tela e redesenha TODAS as anotações da sessão.
+ * Chamado ao virar a página.
+ */
+export function reaplicarAnotacoes() {
+    // Limpa e redesenha todas as anotações
     savedAnnotations.forEach(ann => {
-        if (ann.type === 'highlight') {
-            rendicao.annotations.highlight(ann.cfi, {}, () => {}, "highlight", { "fill": "yellow" });
-        } else if (ann.type === 'annotation') {
-            rendicao.annotations.underline(ann.cfi, { note: ann.note }, () => {}, "underline", { "stroke": "blue" });
-        }
+        // Determina o tipo de anotação correto para a remoção
+        const removalType = ann.type === 'highlight' ? 'highlight' : 'underline';
+        rendicao.annotations.remove(ann.cfi, removalType);
+    });
+
+    // Recria cada anotação a partir dos dados da sessão
+    savedAnnotations.forEach(ann => {
+        drawAnnotation(ann);
     });
 }
 
+// ==========================================================================
+// Funções da Interface (Menu e Seleção)
+// ==========================================================================
+
+function deactivateFixedMenu() {
+    lastCfiRange = null;
+    lastSelectedText = "";
+    if (fixedContextMenu) {
+      fixedContextMenu.classList.remove('active');
+    }
+}
+
+function clearSelection() {
+    try {
+        rendicao.getContents().forEach(content => {
+            if (content && content.window) {
+                content.window.getSelection().removeAllRanges();
+            }
+        });
+    } catch (e) {
+        console.error("Erro ao limpar seleção:", e);
+    }
+    deactivateFixedMenu();
+}
+
+// ==========================================================================
+// Inicialização do Módulo
+// ==========================================================================
+
 export function initAnnotations() {
-    // ---- Eventos de Seleção de Texto ----
     rendicao.on("selected", (cfiRange, contents) => {
         lastCfiRange = cfiRange;
         lastSelectedText = contents.window.getSelection().toString().trim();
-        if (lastSelectedText.length > 0) {
+        if (lastSelectedText.length > 0 && fixedContextMenu) {
             fixedContextMenu.classList.add('active');
         } else {
             deactivateFixedMenu();
@@ -56,36 +138,19 @@ export function initAnnotations() {
 
     rendicao.on("deselected", deactivateFixedMenu);
 
-    // Adiciona listener para fechar o menu ao clicar no livro
-    rendicao.hooks.content.register((contents) => {
-        contents.window.addEventListener('mousedown', () => {
-             // Pequeno delay para garantir que a verificação de seleção ocorra depois do clique
-            setTimeout(() => {
-                const selection = contents.window.getSelection();
-                if (!selection || selection.toString().trim().length === 0) {
-                    deactivateFixedMenu();
-                }
-            }, 10);
-        });
-    });
+    // Evento para redesenhar as anotações ao mudar de página.
+    rendicao.on("relocated", reaplicarAnotacoes);
 
-    // ---- Eventos dos Botões do Menu Fixo ----
+    // --- Listeners dos Botões ---
+    if (!fixedContextMenu) return;
+
     btnToggleFixedMenu.addEventListener('click', (event) => {
         event.stopPropagation();
         fixedContextMenu.classList.toggle('collapsed');
-        const isCollapsed = fixedContextMenu.classList.contains('collapsed');
-        btnToggleFixedMenu.title = isCollapsed ? 'Expandir menu' : 'Recolher menu';
+        btnToggleFixedMenu.title = fixedContextMenu.classList.contains('collapsed') ? 'Expandir menu' : 'Recolher menu';
     });
-    
-    btnHighlightFixed.addEventListener('click', () => {
-        if (!lastCfiRange) return;
-        const grifoExistente = savedAnnotations.some(ann => ann.cfi === lastCfiRange);
-        if (!grifoExistente) {
-            savedAnnotations.push({ cfi: lastCfiRange, text: lastSelectedText, note: null, type: 'highlight' });
-            reaplicarAnotacoes(); // Reaplica para desenhar o novo grifo
-        }
-        clearSelection();
-    });
+
+    btnHighlightFixed.addEventListener('click', () => addAnnotation('highlight'));
 
     btnCopyFixed.addEventListener('click', () => {
         if (!lastSelectedText) return;
@@ -94,42 +159,24 @@ export function initAnnotations() {
     });
 
     btnAnnotateFixed.addEventListener('click', () => {
-        if (!lastCfiRange) return;
         const note = prompt("Digite sua anotação:", "");
         if (note && note.trim() !== "") {
-            savedAnnotations.push({ cfi: lastCfiRange, text: lastSelectedText, note: note.trim(), type: 'annotation' });
-            reaplicarAnotacoes();
+            addAnnotation('annotation', note.trim());
+        } else {
+            clearSelection();
         }
-        clearSelection();
     });
 
     btnDictionaryFixed.addEventListener('click', () => {
         if (!lastSelectedText) return;
-        const word = lastSelectedText.split(' ')[0]; // Pega a primeira palavra
-        const dictionaryUrl = `https://www.dicio.com.br/${encodeURIComponent(word)}`;
-        window.open(dictionaryUrl, '_blank');
+        const word = lastSelectedText.split(' ')[0];
+        window.open(`https://www.dicio.com.br/${encodeURIComponent(word)}`, '_blank');
         clearSelection();
     });
 
     btnAudioFixed.addEventListener('click', () => {
         if (!lastSelectedText) return;
-        readAloud(lastSelectedText); // Chama a função do módulo de áudio
+        readAloud(lastSelectedText);
         clearSelection();
     });
-}
-
-// ==========================================================================
-// Funções Internas
-// ==========================================================================
-
-function deactivateFixedMenu() {
-    lastCfiRange = null;
-    lastSelectedText = "";
-    fixedContextMenu.classList.remove('active');
-}
-
-function clearSelection() {
-    // Limpa a seleção visual do texto no livro
-    rendicao.getContents()[0]?.window.getSelection().removeAllRanges();
-    deactivateFixedMenu();
 }

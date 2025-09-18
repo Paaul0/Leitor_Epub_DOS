@@ -5,6 +5,7 @@
 
 import { livro, rendicao, irPara } from './epubService.js';
 import { savedAnnotations } from './annotations.js';
+import { reaplicarAnotacoes } from './annotations.js';
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
@@ -118,24 +119,37 @@ function renderNotesPanel() {
 }
 
 
-function applyTheme() {
+function applyTheme(contents) { // Adicionamos 'contents' de volta como parâmetro
     const themes = {
         claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
         sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' },
         noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' }
     };
     const theme = themes[currentTheme];
-    
-    // Aplica tema na interface geral (fora do livro)
+
+    // Aplica tema na interface geral (header, footer, etc.)
     document.querySelector('.titulo').style.backgroundColor = theme.bg;
     document.querySelector('.titulo p').style.color = theme.text;
     document.querySelector('.progresso').style.backgroundColor = theme.bg;
     document.querySelector('.progresso').style.borderTopColor = theme.border;
     progressoInfo.style.color = theme.text;
-    
-    // Aplica tema no conteúdo do livro
-    rendicao.themes.override('background', theme.bg);
-    rendicao.themes.override('color', theme.text);
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // Aplica tema no conteúdo do livro (DENTRO do iframe)
+    if (contents) {
+        contents.document.body.style.backgroundColor = theme.bg;
+        contents.document.body.style.color = theme.text;
+
+        // Isso garante que todos os elementos de texto peguem a cor correta
+        const style = contents.document.createElement('style');
+        style.innerHTML = `
+            * {
+               color: ${theme.text} !important;
+            }
+        `;
+        contents.document.head.appendChild(style);
+    }
+    // --- FIM DA CORREÇÃO ---
 }
 
 
@@ -163,7 +177,7 @@ export function initUIManager() {
         const currentLocation = rendicao.currentLocation();
         const chapter = livro.navigation.get(currentLocation?.start?.href);
         menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
-        
+
         gerarSumario(panelSumarioModal, true); // Gera sumário para o modal
         renderNotesPanel();
         menuModal.classList.add('visible');
@@ -187,12 +201,18 @@ export function initUIManager() {
     const updateFontSize = () => {
         fontSizeSlider.value = currentFontSize;
         rendicao.themes.fontSize(`${currentFontSize}%`);
+
+        // Adiciona um pequeno atraso para garantir que a renderização do novo tamanho da fonte
+        // seja concluída antes de redesenhar as anotações.
+        setTimeout(() => {
+            reaplicarAnotacoes();
+        }, 100); // 100ms é geralmente suficiente
     };
     decreaseFontBtn.addEventListener('click', () => { if (currentFontSize > 80) { currentFontSize -= 10; updateFontSize(); } });
     increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
     fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
     fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
-    
+
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyTheme();
@@ -217,20 +237,45 @@ export function initUIManager() {
 
 export function setupContentHooks() {
     rendicao.hooks.content.register((contents) => {
-        // Aplica o tema atual ao novo conteúdo carregado
-        applyTheme();
 
-        // Adiciona funcionalidade de lightbox a todas as imagens dentro do livro
+        // --- INÍCIO DA CORREÇÃO ---
+        const style = contents.document.createElement('style');
+        // Restaurando as regras originais e adicionando a nossa correção
+        style.innerHTML = `
+            p { 
+                margin-bottom: 1.5em; /* Regra original que havíamos perdido */
+            }
+            img, svg {
+                max-width: 100% !important;  /* Restaurando !important */
+                max-height: 95vh !important; /* Adicionando a correção com !important */
+                height: auto !important;
+                width: auto;
+                object-fit: contain;
+                display: block;
+                margin: 0 auto;
+                cursor: pointer;
+            }
+            ::selection { 
+                background-color: #D3D3D3; /* Regra original que havíamos perdido */
+            }
+        `;
+        contents.document.head.appendChild(style);
+
+        // Chamando a função 'applyTheme' e passando 'contents'
+        // para que ela possa estilizar o texto DENTRO do iframe.
+        applyTheme(contents);
+        // --- FIM DA CORREÇÃO ---
+
+
+        // O resto da sua lógica de hooks continua aqui...
         const images = contents.document.querySelectorAll('img');
         images.forEach(img => {
-            img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 lightboxImg.src = img.src;
                 imageLightbox.style.display = 'flex';
             });
         });
 
-        // Permite navegação com as setas do teclado quando o foco está no livro
         contents.window.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft') rendicao.prev();
             if (event.key === 'ArrowRight') rendicao.next();

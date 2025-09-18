@@ -23,25 +23,23 @@ document.addEventListener('DOMContentLoaded', function () {
         // Funções que dependem dos metadados do livro
         UIManager.atualizarTitulo(livro.packaging.metadata.title);
         UIManager.atualizarInfoLivro(livro.packaging.metadata);
-        
+
         // Inicializa a UI e os hooks de conteúdo
         UIManager.initUIManager();
         UIManager.setupContentHooks();
+
+        // Inicializa os módulos de funcionalidades que dependem da rendição
+        Search.initSearch();
+        Annotations.initAnnotations();
+        TTS.initTextToSpeech();
     });
 
     rendicao.on("relocated", (location) => {
         UIManager.atualizarProgresso(location);
     });
 
-    rendicao.on("displayed", () => {
-        // Sempre que uma nova página é exibida, reaplica os grifos
-        Annotations.reaplicarAnotacoes();
-    });
-
-    // Inicializa os módulos de funcionalidades
-    Search.initSearch();
-    Annotations.initAnnotations();
-    TTS.initTextToSpeech();
+    // A chamada para reaplicarAnotacoes foi removida daqui,
+    // pois agora é gerenciada pelo evento 'relocated' dentro de annotations.js.
 
     console.log("Sistema modular completo carregado!");
 });

@@ -803,3 +803,7 @@ input[type="range"] {
     background-color: #C7C7C7;
     border-radius: 8px;
 }
+
+.epubjs-annotation.search-highlight {
+    border-bottom: 2px solid red !important;
+}

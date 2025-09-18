@@ -1,13 +1,14 @@
 /**
  * search.js
  * Módulo para gerenciar a funcionalidade de pesquisa no livro.
+ * VERSÃO CORRIGIDA 2.0 - Resolve o problema do grifo duplo.
  */
 
 import { livro, rendicao } from './epubService.js';
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
-// ==========================================================================
+// ========================================================================== 
 const btnSearch = document.getElementById('btn-search');
 const searchBar = document.getElementById('search-bar');
 const searchInput = document.getElementById('search-input');
@@ -15,11 +16,10 @@ const closeSearchBtn = document.getElementById('close-search-btn');
 const searchResultsInfo = document.getElementById('search-results-info');
 const searchPrevBtn = document.getElementById('search-prev-btn');
 const searchNextBtn = document.getElementById('search-next-btn');
-const leitorEl = document.getElementById('leitor');
 
 // ==========================================================================
 // Variáveis de Estado da Pesquisa
-// ==========================================================================
+// ========================================================================== 
 let searchResults = [];
 let currentSearchIndex = 0;
 
@@ -27,46 +27,62 @@ let currentSearchIndex = 0;
 // Funções Internas do Módulo
 // ==========================================================================
 
-// Realiza a busca no livro inteiro
 function doSearch(query) {
-    // Usando o método do spine para pesquisar em todas as seções
     return Promise.all(
         livro.spine.spineItems.map(item =>
             item.load(livro.load.bind(livro))
                 .then(item.find.bind(item, query))
         )
-    ).then(results => [].concat.apply([], results)); // Achata o array de resultados
-};
+    ).then(results => [].concat.apply([], results));
+}
+
+function clearSearchHighlights() {
+    try {
+        searchResults.forEach(result => {
+            rendicao.annotations.remove(result.cfi, 'highlight');
+        });
+    } catch (e) {
+        console.warn("Erro ao limpar grifos de busca:", e);
+    }
+}
+
+// Redesenha o resultado atual sempre que a página muda (relocated).
+// Esta função agora é a ÚNICA responsável por desenhar o grifo.
+function reapplyCurrentSearch() {
+    if (searchResults.length > 0) {
+        const cfi = searchResults[currentSearchIndex].cfi;
+        rendicao.annotations.highlight(
+            cfi,
+            {},
+            () => {},
+            "search-highlight", { "fill": "red", "fill-opacity": "0.3" }
+        );
+    }
+}
 
 // Exibe um resultado específico na tela
 function displaySearchResult() {
     if (!searchResults || searchResults.length === 0) return;
 
+    // Limpa grifos anteriores antes de navegar para o novo
+    clearSearchHighlights();
+
     const cfi = searchResults[currentSearchIndex].cfi;
-    rendicao.display(cfi).then(() => {
-        // Cria um "flash" visual para destacar a área do resultado
-        const flashOverlay = document.createElement('div');
-        Object.assign(flashOverlay.style, {
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(255, 255, 0, 0.3)',
-            zIndex: '1000',
-            pointerEvents: 'none',
-            transition: 'opacity 0.5s ease-out',
-            opacity: '1'
-        });
-        leitorEl.appendChild(flashOverlay);
 
-        setTimeout(() => {
-            flashOverlay.style.opacity = '0';
-            setTimeout(() => flashOverlay.remove(), 500);
-        }, 400);
-    });
+    // Apenas navega até o resultado. O evento 'relocated' vai chamar
+    // a função reapplyCurrentSearch() para desenhar o grifo.
+    rendicao.display(cfi);
+    
+    // ==========================================================================
+    // ALTERAÇÃO PRINCIPAL: A chamada para desenhar o grifo foi removida daqui
+    // para evitar a dupla renderização.
+    //
+    // rendicao.display(cfi).then(() => {
+    //     rendicao.annotations.highlight(...); // <-- LINHA REMOVIDA
+    // });
+    // ==========================================================================
 
-    // Atualiza o texto "1 de X" e habilita/desabilita os botões
+    // Atualiza texto e botões
     searchResultsInfo.textContent = `${currentSearchIndex + 1} de ${searchResults.length}`;
     searchPrevBtn.disabled = currentSearchIndex === 0;
     searchNextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
@@ -79,6 +95,9 @@ function closeAndClearSearch() {
     searchResultsInfo.textContent = "";
     searchPrevBtn.disabled = true;
     searchNextBtn.disabled = true;
+
+    clearSearchHighlights();
+
     searchResults = [];
     currentSearchIndex = 0;
 }
@@ -100,19 +119,19 @@ export function initSearch() {
 
     closeSearchBtn.addEventListener('click', closeAndClearSearch);
 
-    // Fecha a busca se clicar fora
     document.addEventListener('click', (e) => {
         if (!searchBar.contains(e.target) && !btnSearch.contains(e.target) && searchBar.classList.contains('visible')) {
             closeAndClearSearch();
         }
     });
 
-    // Executa a busca ao pressionar Enter
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const query = searchInput.value.trim();
             if (query) {
                 searchResultsInfo.textContent = "Buscando...";
+                clearSearchHighlights();
+
                 doSearch(query).then((results) => {
                     searchResults = results;
                     currentSearchIndex = 0;
@@ -130,7 +149,6 @@ export function initSearch() {
         }
     });
 
-    // Navegação entre os resultados
     searchPrevBtn.addEventListener('click', () => {
         if (currentSearchIndex > 0) {
             currentSearchIndex--;
@@ -144,4 +162,7 @@ export function initSearch() {
             displaySearchResult();
         }
     });
+
+    // Evento para redesenhar o grifo ao mudar de página
+    rendicao.on("relocated", reapplyCurrentSearch);
 }
