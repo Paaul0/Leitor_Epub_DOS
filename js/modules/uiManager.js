@@ -113,15 +113,18 @@ function gerarSumario(container, emModal = false) {
 
 function renderNotesPanel() {
     panelNotas.innerHTML = '';
-    const hasNotes = savedAnnotations.length > 0;
 
-    if (hasNotes) {
-        savedAnnotations.forEach(annotation => {
+    // Filtra para pegar apenas as anotações que têm um comentário escrito.
+    const notesWithComments = savedAnnotations.filter(ann => ann.type === 'annotation' && ann.note);
+
+    // Renderiza as anotações na tela, como antes.
+    if (notesWithComments.length > 0) {
+        notesWithComments.forEach(annotation => {
             const noteItem = document.createElement('div');
             noteItem.className = 'note-item';
             noteItem.innerHTML = `
                 <blockquote class="note-text">"${annotation.text}"</blockquote>
-                ${annotation.note ? `<p class="note-comment">${annotation.note}</p>` : ''}
+                <p class="note-comment">${annotation.note}</p>
             `;
             noteItem.addEventListener('click', () => {
                 irPara(annotation.cfi);
@@ -132,6 +135,52 @@ function renderNotesPanel() {
     } else {
         panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez anotações.</p>';
     }
+
+    // --- INÍCIO DA NOVA FUNCIONALIDADE ---
+
+    // 1. Cria o botão de exportação
+    const exportButton = document.createElement('button');
+    exportButton.id = 'btn-export-notes';
+    exportButton.textContent = 'Exportar para .txt';
+    // Reutiliza uma classe de botão existente para manter o estilo
+    exportButton.className = 'kindle-button';
+    exportButton.style.marginTop = '20px';
+    panelNotas.appendChild(exportButton);
+
+    // Desativa o botão se não houver notas para exportar
+    if (notesWithComments.length === 0) {
+        exportButton.disabled = true;
+    }
+
+    // 2. Adiciona a lógica para o clique no botão
+    exportButton.addEventListener('click', () => {
+        // Pega o título do livro para o nome do arquivo e conteúdo
+        const bookTitle = livro.packaging.metadata.title || 'livro';
+        const sanitizedTitle = bookTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const filename = `notas_${sanitizedTitle}.txt`;
+
+        // 3. Formata o conteúdo do arquivo de texto
+        let fileContent = `Anotações do Livro: ${bookTitle}\n\n`;
+        fileContent += "========================================\n\n";
+
+        notesWithComments.forEach((ann, index) => {
+            fileContent += `ANOTAÇÃO #${index + 1}\n\n`;
+            fileContent += `Trecho Grifado:\n"${ann.text}"\n\n`;
+            fileContent += `Seu Comentário:\n${ann.note}\n\n`;
+            fileContent += "----------------------------------------\n\n";
+        });
+
+        // 4. Cria o arquivo e inicia o download
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a); // Adiciona o link ao corpo da página
+        a.click(); // Simula o clique para iniciar o download
+        document.body.removeChild(a); // Remove o link após o clique
+        URL.revokeObjectURL(url); // Libera a memória
+    });
 }
 
 /**
