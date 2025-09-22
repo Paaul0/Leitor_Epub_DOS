@@ -162,9 +162,16 @@ export function initAnnotations() {
 
     btnDictionaryFixed.addEventListener('click', () => {
         if (!lastSelectedText) return;
+
         const word = lastSelectedText.split(' ')[0];
-        
-        window.open(`https://www.dicio.com.br/${encodeURIComponent(word)}`, '_blank');
+
+        const normalizedWord = word
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+        window.open(`https://www.dicio.com.br/${normalizedWord}`, '_blank');
+
         clearSelection();
     });
 
