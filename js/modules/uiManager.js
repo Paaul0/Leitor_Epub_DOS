@@ -1,11 +1,11 @@
 /**
  * uiManager.js
  * Módulo para controlar todos os elementos e eventos da interface do usuário (DOM).
+ * VERSÃO CORRIGIDA: Inclui lógica "inteligente" para o modo noturno.
  */
 
 import { livro, rendicao, irPara } from './epubService.js';
-import { savedAnnotations } from './annotations.js';
-import { reaplicarAnotacoes } from './annotations.js';
+import { savedAnnotations, reaplicarAnotacoes } from './annotations.js';
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
@@ -43,9 +43,26 @@ const imageLightbox = document.getElementById('image-lightbox');
 const lightboxImg = document.getElementById('lightbox-img');
 const closeLightboxBtn = document.querySelector('.close-lightbox');
 
-// Estado da UI
+// ==========================================================================
+// Estado e Configurações da UI
+// ==========================================================================
 let currentTheme = 'claro';
 let currentFontSize = 100;
+
+const THEMES = {
+    claro: {
+        ui: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
+        content: { 'body': { 'background': '#FFFFFF', 'color': '#000000 !important' } }
+    },
+    sepia: {
+        ui: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' },
+        content: { 'body': { 'background': '#fbf0d9', 'color': '#5b4636 !important' } }
+    },
+    noturno: {
+        ui: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' },
+        content: { 'body': { 'background': '#383B43', 'color': '#E0E0E0 !important' } }
+    }
+};
 
 
 // ==========================================================================
@@ -68,7 +85,6 @@ export function atualizarInfoLivro(metadata) {
     const { title, creator, pubdate } = metadata;
     let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
     if (creator) infoHtml += `<p class="book-author">Por: ${creator}</p>`;
-    // A data pode vir em formatos diferentes, uma verificação simples ajuda
     if (pubdate) infoHtml += `<p class="book-publisher">Publicado em: ${new Date(pubdate).getFullYear()}</p>`;
     infoLivEl.innerHTML = infoHtml;
 }
@@ -91,7 +107,7 @@ function gerarSumario(container, emModal = false) {
             }
         });
     });
-    container.innerHTML = ''; // Limpa o conteúdo anterior
+    container.innerHTML = '';
     container.appendChild(sumarioHtml);
 }
 
@@ -118,40 +134,50 @@ function renderNotesPanel() {
     }
 }
 
+/**
+ * Aplica o tema na interface principal da aplicação (fora do conteúdo do livro).
+ * @param {string} themeName - O nome do tema ('claro', 'sepia', 'noturno').
+ */
+function applyUiTheme(themeName) {
+    const theme = THEMES[themeName].ui;
 
-function applyTheme(contents) { // Adicionamos 'contents' de volta como parâmetro
-    const themes = {
-        claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
-        sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' },
-        noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' }
-    };
-    const theme = themes[currentTheme];
+    document.querySelector('.leitor').style.backgroundColor = theme.bg;
 
-    // Aplica tema na interface geral (header, footer, etc.)
     document.querySelector('.titulo').style.backgroundColor = theme.bg;
     document.querySelector('.titulo p').style.color = theme.text;
     document.querySelector('.progresso').style.backgroundColor = theme.bg;
     document.querySelector('.progresso').style.borderTopColor = theme.border;
     progressoInfo.style.color = theme.text;
-
-    // --- INÍCIO DA CORREÇÃO ---
-    // Aplica tema no conteúdo do livro (DENTRO do iframe)
-    if (contents) {
-        contents.document.body.style.backgroundColor = theme.bg;
-        contents.document.body.style.color = theme.text;
-
-        // Isso garante que todos os elementos de texto peguem a cor correta
-        const style = contents.document.createElement('style');
-        style.innerHTML = `
-            * {
-               color: ${theme.text} !important;
-            }
-        `;
-        contents.document.head.appendChild(style);
-    }
-    // --- FIM DA CORREÇÃO ---
 }
 
+/**
+ * @param {object} contents
+ */
+function applySmartNightMode(contents) {
+    const isColorLight = (colorStr) => {
+        if (!colorStr || colorStr === 'transparent' || colorStr.startsWith('rgba(0, 0, 0, 0)')) {
+            return false;
+        }
+        try {
+            const [r, g, b] = colorStr.match(/\d+/g).map(Number);
+            // Fórmula de luminância para determinar o brilho
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+            return luminance > 186; // Limiar para considerar uma cor como "clara"
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const elementsToCheck = contents.document.body.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote');
+    elementsToCheck.forEach(el => {
+        const style = contents.window.getComputedStyle(el);
+        const bgColor = style.backgroundColor;
+
+        if (isColorLight(bgColor)) {
+            el.style.setProperty('color', '#111111', 'important');
+        }
+    });
+}
 
 // ==========================================================================
 // Inicializador Principal de Eventos da UI
@@ -178,7 +204,7 @@ export function initUIManager() {
         const chapter = livro.navigation.get(currentLocation?.start?.href);
         menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
 
-        gerarSumario(panelSumarioModal, true); // Gera sumário para o modal
+        gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
         menuModal.classList.add('visible');
     });
@@ -198,24 +224,25 @@ export function initUIManager() {
     });
 
     // ---- Painel de Exibição ----
+    Object.keys(THEMES).forEach(name => {
+        rendicao.themes.register(name, THEMES[name].content);
+    });
+
     const updateFontSize = () => {
         fontSizeSlider.value = currentFontSize;
         rendicao.themes.fontSize(`${currentFontSize}%`);
-
-        // Adiciona um pequeno atraso para garantir que a renderização do novo tamanho da fonte
-        // seja concluída antes de redesenhar as anotações.
-        setTimeout(() => {
-            reaplicarAnotacoes();
-        }, 100); // 100ms é geralmente suficiente
+        setTimeout(reaplicarAnotacoes, 100);
     };
     decreaseFontBtn.addEventListener('click', () => { if (currentFontSize > 80) { currentFontSize -= 10; updateFontSize(); } });
     increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
     fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
     fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
 
+    // Lógica de troca de tema
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
-        applyTheme();
+        applyUiTheme(currentTheme);
+        rendicao.themes.select(currentTheme); 
     }));
 
     layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
@@ -226,10 +253,8 @@ export function initUIManager() {
         if (e.target === imageLightbox) imageLightbox.style.display = 'none';
     });
 
-    // Gera o sumário da sidebar principal
     gerarSumario(sumarioContainer, false);
 }
-
 
 // ==========================================================================
 // Hooks para o conteúdo do livro (executado para cada capítulo)
@@ -238,38 +263,43 @@ export function initUIManager() {
 export function setupContentHooks() {
     rendicao.hooks.content.register((contents) => {
 
-        // --- INÍCIO DA CORREÇÃO ---
         const style = contents.document.createElement('style');
-        // Restaurando as regras originais e adicionando a nossa correção
         style.innerHTML = `
-            p { 
-                margin-bottom: 1.5em; /* Regra original que havíamos perdido */
+            /* Espaçamento entre parágrafos (Restaurado) */
+            p {
+                margin-bottom: 1.5em;
             }
+
+            /* Estilos para imagens e SVGs responsivos (Restaurado) */
             img, svg {
-                max-width: 100% !important;  /* Restaurando !important */
-                max-height: 95vh !important; /* Adicionando a correção com !important */
+                max-width: 100% !important;
+                max-height: 95vh !important;
                 height: auto !important;
                 width: auto;
                 object-fit: contain;
                 display: block;
                 margin: 0 auto;
-                cursor: pointer;
             }
-            ::selection { 
-                background-color: #D3D3D3; /* Regra original que havíamos perdido */
+
+            /* Cor da seleção de texto (Restaurado) */
+            ::selection {
+                background-color: #D3D3D3;
             }
         `;
         contents.document.head.appendChild(style);
 
-        // Chamando a função 'applyTheme' e passando 'contents'
-        // para que ela possa estilizar o texto DENTRO do iframe.
-        applyTheme(contents);
-        // --- FIM DA CORREÇÃO ---
 
+        // --- LÓGICA DE TEMAS E FUNCIONALIDADES ---
+        rendicao.themes.select(currentTheme);
+        applyUiTheme(currentTheme);
 
-        // O resto da sua lógica de hooks continua aqui...
-        const images = contents.document.querySelectorAll('img');
+        if (currentTheme === 'noturno') {
+            applySmartNightMode(contents);
+        }
+
+        const images = contents.document.querySelectorAll('img, svg');
         images.forEach(img => {
+            img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
                 lightboxImg.src = img.src;
                 imageLightbox.style.display = 'flex';

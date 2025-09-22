@@ -11,8 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (estante) {
         caminhosDosLivros.forEach(caminho => {
             
-            // MUDANÇA IMPORTANTE AQUI:
-            // Passamos o objeto JSZip que carregamos no HTML para a Epub.js
             const livro = ePub(caminho, { JSZip: window.JSZip });
 
             Promise.all([livro.coverUrl(), livro.loaded.metadata])

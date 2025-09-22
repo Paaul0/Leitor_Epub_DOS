@@ -24,11 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
         UIManager.atualizarTitulo(livro.packaging.metadata.title);
         UIManager.atualizarInfoLivro(livro.packaging.metadata);
 
-        // Inicializa a UI e os hooks de conteúdo
+        // Inicializa os módulos de funcionalidades que dependem da rendição
         UIManager.initUIManager();
         UIManager.setupContentHooks();
 
-        // Inicializa os módulos de funcionalidades que dependem da rendição
         Search.initSearch();
         Annotations.initAnnotations();
         TTS.initTextToSpeech();
@@ -37,9 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
     rendicao.on("relocated", (location) => {
         UIManager.atualizarProgresso(location);
     });
-
-    // A chamada para reaplicarAnotacoes foi removida daqui,
-    // pois agora é gerenciada pelo evento 'relocated' dentro de annotations.js.
 
     console.log("Sistema modular completo carregado!");
 });

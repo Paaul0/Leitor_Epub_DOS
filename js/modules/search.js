@@ -1,7 +1,6 @@
 /**
  * search.js
  * Módulo para gerenciar a funcionalidade de pesquisa no livro.
- * VERSÃO CORRIGIDA 2.0 - Resolve o problema do grifo duplo.
  */
 
 import { livro, rendicao } from './epubService.js';
@@ -47,14 +46,13 @@ function clearSearchHighlights() {
 }
 
 // Redesenha o resultado atual sempre que a página muda (relocated).
-// Esta função agora é a ÚNICA responsável por desenhar o grifo.
 function reapplyCurrentSearch() {
     if (searchResults.length > 0) {
         const cfi = searchResults[currentSearchIndex].cfi;
         rendicao.annotations.highlight(
             cfi,
             {},
-            () => {},
+            () => { },
             "search-highlight", { "fill": "red", "fill-opacity": "0.3" }
         );
     }
@@ -72,15 +70,6 @@ function displaySearchResult() {
     // Apenas navega até o resultado. O evento 'relocated' vai chamar
     // a função reapplyCurrentSearch() para desenhar o grifo.
     rendicao.display(cfi);
-    
-    // ==========================================================================
-    // ALTERAÇÃO PRINCIPAL: A chamada para desenhar o grifo foi removida daqui
-    // para evitar a dupla renderização.
-    //
-    // rendicao.display(cfi).then(() => {
-    //     rendicao.annotations.highlight(...); // <-- LINHA REMOVIDA
-    // });
-    // ==========================================================================
 
     // Atualiza texto e botões
     searchResultsInfo.textContent = `${currentSearchIndex + 1} de ${searchResults.length}`;

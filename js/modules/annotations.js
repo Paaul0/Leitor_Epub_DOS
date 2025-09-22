@@ -1,7 +1,7 @@
 /**
  * annotations.js
  * Módulo para gerenciar anotações e grifos na sessão atual.
- * VERSÃO 12.0 - Lógica final sem remoção e com verificação estrita para evitar sobreposição de opacidade.
+ * Lógica final sem remoção e com verificação estrita para evitar sobreposição de opacidade.
  */
 
 import { rendicao } from './epubService.js';
@@ -21,7 +21,7 @@ const btnAudioFixed = document.getElementById('fixed-audio-btn');
 // ==========================================================================
 // Estado do Módulo (Apenas em Memória)
 // ==========================================================================
-export let savedAnnotations = []; // As anotações existem apenas enquanto a página estiver aberta.
+export let savedAnnotations = [];
 let lastCfiRange = null;
 let lastSelectedText = "";
 
@@ -30,10 +30,10 @@ let lastSelectedText = "";
 // ==========================================================================
 
 /**
- * Adiciona uma nova anotação, prevenindo duplicatas exatas.
- * @param {'highlight' | 'annotation'} type - O tipo de anotação.
- * @param {string} [note] - O texto da nota, se houver.
+ * @param {'highlight' | 'annotation'} type
+ * @param {string} [note]
  */
+
 function addAnnotation(type, note = '') {
     if (!lastCfiRange || !lastSelectedText) return;
 
@@ -41,7 +41,6 @@ function addAnnotation(type, note = '') {
     const cfiString = lastCfiRange.toString();
     const isAlreadyAnnotated = savedAnnotations.some(ann => ann.cfi.toString() === cfiString);
 
-    // Se a anotação já existe, ignora a nova e apenas limpa a seleção.
     if (isAlreadyAnnotated) {
         clearSelection();
         return;
@@ -54,13 +53,10 @@ function addAnnotation(type, note = '') {
         note: note
     };
 
-    // 1. Adiciona a nova anotação aos dados da sessão.
     savedAnnotations.push(newAnnotation);
 
-    // 2. Desenha APENAS a nova anotação na tela.
     drawAnnotation(newAnnotation);
 
-    // 3. Limpa a seleção de texto do usuário.
     clearSelection();
 }
 
@@ -68,13 +64,13 @@ function addAnnotation(type, note = '') {
  * Desenha uma única anotação na tela, sem a funcionalidade de clique para remover.
  * @param {object} ann - O objeto da anotação.
  */
+
 function drawAnnotation(ann) {
     const style = ann.type === 'highlight'
         ? { "fill": "yellow", "fill-opacity": "0.3" }
         : { "stroke": "blue", "stroke-width": "2px", "stroke-dasharray": "5, 3" };
     const method = ann.type === 'highlight' ? 'highlight' : 'underline';
 
-    // O handler de clique foi removido. Clicar no grifo não faz mais nada.
     rendicao.annotations[method](ann.cfi, {}, () => {}, "epubjs-annotation", style);
 }
 
@@ -83,14 +79,11 @@ function drawAnnotation(ann) {
  * Chamado ao virar a página.
  */
 export function reaplicarAnotacoes() {
-    // Limpa e redesenha todas as anotações
     savedAnnotations.forEach(ann => {
-        // Determina o tipo de anotação correto para a remoção
         const removalType = ann.type === 'highlight' ? 'highlight' : 'underline';
         rendicao.annotations.remove(ann.cfi, removalType);
     });
 
-    // Recria cada anotação a partir dos dados da sessão
     savedAnnotations.forEach(ann => {
         drawAnnotation(ann);
     });
@@ -170,6 +163,7 @@ export function initAnnotations() {
     btnDictionaryFixed.addEventListener('click', () => {
         if (!lastSelectedText) return;
         const word = lastSelectedText.split(' ')[0];
+        
         window.open(`https://www.dicio.com.br/${encodeURIComponent(word)}`, '_blank');
         clearSelection();
     });
