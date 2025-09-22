@@ -23,6 +23,13 @@ export function initEpub(caminhoDoLivro, leitorContainerId) {
         allowScriptedContent: true 
     });
 
+    rendicao.hooks.display.register((view) => {
+        const iframe = view.iframe;
+        if (iframe && !iframe.title) {
+            iframe.title = "Conteúdo do livro";
+        }
+    });
+
     // Gera as localizações para cálculo de progresso
     livro.ready.then(() => {
         return livro.locations.generate(1024);
