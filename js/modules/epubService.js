@@ -25,8 +25,11 @@ export function initEpub(caminhoDoLivro, leitorContainerId) {
 
     rendicao.hooks.display.register((view) => {
         const iframe = view.iframe;
-        if (iframe && !iframe.title) {
-            iframe.title = "Conteúdo do livro";
+        if (iframe) {
+            if (!iframe.title) {
+                iframe.title = "Conteúdo do livro";
+            }
+            iframe.tabIndex = 0;
         }
     });
 

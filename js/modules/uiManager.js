@@ -228,6 +228,132 @@ function applySmartNightMode(contents) {
     });
 }
 
+/**
+ * Assume o controle total da navegação por Tab de forma inteligente.
+ * Se o modal estiver aberto, prende o foco dentro dele.
+ * Se o modal estiver fechado, gerencia o foco na página principal.
+ */
+function setupGlobalFocusManagement() {
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Tab') {
+            return; // Se não for a tecla Tab, não faz nada.
+        }
+
+        const modal = document.getElementById('menu-modal');
+        const isModalVisible = modal.classList.contains('visible');
+
+        // Define o "contexto" da nossa busca: o modal ou a página inteira.
+        const searchContext = isModalVisible ? modal : document.body;
+
+        // 1. Define o que é um elemento focável.
+        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
+
+        // 2. Cria uma lista com todos os elementos focáveis DENTRO DO CONTEXTO ATUAL.
+        const focusableElements = Array.from(searchContext.querySelectorAll(query));
+
+        // 3. Filtra a lista para incluir apenas os que estão VISÍVEIS na tela.
+        const visibleFocusableElements = focusableElements.filter(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+        });
+
+        if (visibleFocusableElements.length === 0) {
+            event.preventDefault(); // Impede o Tab de ir para a URL se não houver nada focável.
+            return;
+        }
+
+        // 4. Identifica a posição do elemento atualmente focado.
+        const currentIndex = visibleFocusableElements.indexOf(document.activeElement);
+        const isTabbingBackward = event.shiftKey;
+
+        // 5. Calcula qual será o próximo elemento a receber foco, criando um loop.
+        let nextIndex = 0;
+        if (isTabbingBackward) {
+            // Se estivermos no primeiro elemento, vai para o último.
+            nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
+        } else {
+            // Se estivermos no último elemento, vai para o primeiro.
+            nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
+        }
+
+        // 6. Impede o navegador de agir e move o foco manualmente.
+        event.preventDefault();
+        visibleFocusableElements[nextIndex].focus();
+    });
+}
+
+// No arquivo: uiManager.js
+
+// -- INÍCIO DO NOVO BLOCO DE CÓDIGO --
+
+// Variáveis de controle para o nosso modal
+const mainPageElements = document.querySelectorAll('header, aside, main, footer, #fixed-context-menu, #btn-show-sidebar');
+let modalKeydownListener = null; // Guarda a função do listener para podermos removê-la depois
+let escapeKeyListener = null;    // Guarda a função do listener da tecla Escape
+
+/**
+ * Fecha o modal se a tecla Escape for pressionada.
+ * @param {KeyboardEvent} event
+ */
+function handleEscapeKey(event) {
+    if (event.key === 'Escape') {
+        closeMenuModal();
+    }
+}
+
+/**
+ * Abre e gerencia o modal de menu, aplicando todas as regras de acessibilidade.
+ */
+function openMenuModal() {
+    mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
+    btnMenu.setAttribute('aria-expanded', 'true');
+
+    menuModal.classList.add('visible');
+
+    const focusableElementsQuery = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = Array.from(menuModal.querySelectorAll(focusableElementsQuery));
+    const firstFocusableElement = focusableElements[0];
+    const lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+    setTimeout(() => {
+        firstFocusableElement.focus();
+    }, 100);
+
+    modalKeydownListener = (event) => {
+        if (event.key !== 'Tab') return;
+
+        if (event.shiftKey) {
+            if (document.activeElement === firstFocusableElement) {
+                event.preventDefault();
+                lastFocusableElement.focus();
+            }
+        } else {
+            if (document.activeElement === lastFocusableElement) {
+                event.preventDefault();
+                firstFocusableElement.focus();
+            }
+        }
+    };
+
+    menuModal.addEventListener('keydown', modalKeydownListener);
+    document.addEventListener('keydown', handleEscapeKey);
+}
+
+/**
+ * Fecha o modal de menu e restaura o estado da página.
+ */
+function closeMenuModal() {
+    menuModal.removeEventListener('keydown', modalKeydownListener);
+    document.removeEventListener('keydown', handleEscapeKey);
+
+    mainPageElements.forEach(el => el.removeAttribute('aria-hidden'));
+    btnMenu.setAttribute('aria-expanded', 'false');
+
+    menuModal.classList.remove('visible');
+
+    btnMenu.focus();
+}
+
 // ==========================================================================
 // Inicializador Principal de Eventos da UI
 // ==========================================================================
@@ -252,23 +378,45 @@ export function initUIManager() {
         const currentLocation = rendicao.currentLocation();
         const chapter = livro.navigation.get(currentLocation?.start?.href);
         menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
-
         gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
-        menuModal.classList.add('visible');
+
+        openMenuModal();
     });
-    closeMenuModalBtn.addEventListener('click', () => menuModal.classList.remove('visible'));
+    closeMenuModalBtn.addEventListener('click', closeMenuModal);
     menuModal.addEventListener('click', (e) => {
-        if (e.target === menuModal) menuModal.classList.remove('visible');
+        // Fecha apenas se o clique for no fundo escuro, não no conteúdo
+        if (e.target === menuModal) {
+            closeMenuModal();
+        }
     });
 
     // ---- Abas do Menu Modal ----
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabPanels.forEach(panel => panel.classList.remove('active'));
+            // Desativa todas as abas e painéis
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            tabPanels.forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // Ativa o botão e o painel clicado
             button.classList.add('active');
-            document.getElementById(button.dataset.target).classList.add('active');
+            button.setAttribute('aria-selected', 'true');
+            const targetPanel = document.getElementById(button.dataset.target);
+            targetPanel.classList.add('active');
+
+            // --- A MÁGICA DA CORREÇÃO ACONTECE AQUI ---
+            // Em vez de focar no painel, procuramos o primeiro item focável DENTRO dele.
+            const firstFocusable = targetPanel.querySelector('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+
+            // Se encontrarmos um item, movemos o foco para ele.
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
         });
     });
 
@@ -303,6 +451,7 @@ export function initUIManager() {
     });
 
     gerarSumario(sumarioContainer, false);
+    setupGlobalFocusManagement();
 }
 
 // ==========================================================================
