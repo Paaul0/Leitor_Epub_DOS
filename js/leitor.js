@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
         Search.initSearch();
         Annotations.initAnnotations();
         TTS.initTextToSpeech();
+        const searchButton = document.getElementById('btn-search');
+        if (searchButton) {
+            searchButton.focus();
+        }
     });
 
     rendicao.on("relocated", (location) => {

@@ -7,6 +7,13 @@
 import { livro, rendicao, irPara } from './epubService.js';
 import { savedAnnotations, reaplicarAnotacoes } from './annotations.js';
 
+function anunciar(message) {
+    const announcer = document.getElementById('a11y-announcer');
+    if (announcer) {
+        announcer.textContent = message;
+    }
+}
+
 // ==========================================================================
 // Seleção de Elementos (DOM)
 // ==========================================================================
@@ -37,6 +44,10 @@ const fontSizeSlider = document.getElementById('font-size-slider');
 const fontSelect = document.getElementById('font-select');
 const themeRadios = document.querySelectorAll('input[name="theme"]');
 const layoutRadios = document.querySelectorAll('input[name="layout"]');
+
+// Menu Fixo
+const fixedDecreaseFontBtn = document.getElementById('fixed-decrease-font-btn');
+const fixedIncreaseFontBtn = document.getElementById('fixed-increase-font-btn');
 
 // Lightbox
 const imageLightbox = document.getElementById('image-lightbox');
@@ -253,12 +264,21 @@ function setupGlobalFocusManagement() {
 
         // 3. Filtra a lista para incluir apenas os que estão VISÍVEIS na tela.
         const visibleFocusableElements = focusableElements.filter(el => {
+            const style = getComputedStyle(el);
+
+            // REGRA DE EXCEÇÃO PARA O IFRAME:
+            // Considera-o visível se não estiver explicitamente escondido.
+            if (el.tagName === 'IFRAME') {
+                return style.visibility !== 'hidden' && style.display !== 'none';
+            }
+
+            // Mantém a regra rigorosa para todos os outros elementos.
             const rect = el.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+            return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
         });
 
         if (visibleFocusableElements.length === 0) {
-            event.preventDefault(); // Impede o Tab de ir para a URL se não houver nada focável.
+            event.preventDefault();
             return;
         }
 
@@ -269,10 +289,8 @@ function setupGlobalFocusManagement() {
         // 5. Calcula qual será o próximo elemento a receber foco, criando um loop.
         let nextIndex = 0;
         if (isTabbingBackward) {
-            // Se estivermos no primeiro elemento, vai para o último.
             nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
         } else {
-            // Se estivermos no último elemento, vai para o primeiro.
             nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
         }
 
@@ -354,6 +372,32 @@ function closeMenuModal() {
     btnMenu.focus();
 }
 
+/**
+ * Ativa o "Modo de Leitura", permitindo que usuários de leitores de tela
+ * naveguem pelo texto do livro com comandos padrão.
+ */
+function setupReadingMode() {
+    const leitorArea = document.getElementById('leitor');
+
+    leitorArea.addEventListener('keydown', (event) => {
+        // Verifica se o foco está no iframe principal e se a tecla foi Enter
+        const bookIframe = leitorArea.querySelector('iframe');
+        if (document.activeElement === bookIframe && event.key === 'Enter') {
+            event.preventDefault(); // Impede qualquer ação padrão
+
+            // Encontra o corpo do documento DENTRO do iframe
+            const bookBody = bookIframe.contentDocument.getElementById('book-content-body');
+
+            if (bookBody) {
+                // Move o foco do teclado para dentro do livro
+                bookBody.focus();
+                // Anuncia a mudança de modo para o usuário
+                anunciar("Modo de leitura ativado. Use as setas do teclado para navegar pelo texto.");
+            }
+        }
+    });
+}
+
 // ==========================================================================
 // Inicializador Principal de Eventos da UI
 // ==========================================================================
@@ -429,6 +473,7 @@ export function initUIManager() {
         fontSizeSlider.value = currentFontSize;
         rendicao.themes.fontSize(`${currentFontSize}%`);
         setTimeout(reaplicarAnotacoes, 100);
+        anunciar(`Tamanho da fonte ${currentFontSize}%`);
     };
     decreaseFontBtn.addEventListener('click', () => { if (currentFontSize > 80) { currentFontSize -= 10; updateFontSize(); } });
     increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
@@ -439,7 +484,8 @@ export function initUIManager() {
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyUiTheme(currentTheme);
-        rendicao.themes.select(currentTheme); 
+        rendicao.themes.select(currentTheme);
+        anunciar(`Tema alterado para ${currentTheme}`);
     }));
 
     layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
@@ -452,6 +498,7 @@ export function initUIManager() {
 
     gerarSumario(sumarioContainer, false);
     setupGlobalFocusManagement();
+    setupReadingMode();
 }
 
 // ==========================================================================

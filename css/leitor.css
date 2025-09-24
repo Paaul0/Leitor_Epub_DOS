@@ -491,6 +491,11 @@ body.sidebar-collapsed #btn-show-sidebar {
     border-bottom: 1px solid #D1D1D1;
 }
 
+menu-header .back-btn {
+    position: absolute;
+    left: 15px;
+}
+
 .menu-header .back-btn {
     background: none;
     border: none;
@@ -631,7 +636,20 @@ input[type="range"] {
 }
 
 .theme-control input[type="radio"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
+}
+
+.theme-control input[type="radio"]:focus + .theme-preview {
+    outline: 2px solid #007AFF;
+    outline-offset: 2px;
 }
 
 .theme-control .theme-preview {
@@ -806,4 +824,22 @@ input[type="range"] {
 
 .epubjs-annotation.search-highlight {
     border-bottom: 2px solid red !important;
+}
+
+.visually-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0 0 0 0);
+}
+
+/* Adicione no final do arquivo */
+#sumario-container a:focus,
+#panel-sumario a:focus {
+    outline: 2px solid black;
 }
