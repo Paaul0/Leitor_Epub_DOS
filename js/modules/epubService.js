@@ -15,21 +15,21 @@ export function initEpub(caminhoDoLivro, leitorContainerId) {
     }
 
     livro = ePub(caminhoDoLivro, { JSZip: window.JSZip });
-    
-    rendicao = livro.renderTo(leitorContainerId, { 
-        width: "100%", 
-        height: "100%", 
-        spread: "none", 
-        allowScriptedContent: true 
+
+    rendicao = livro.renderTo(leitorContainerId, {
+        width: "100%",
+        height: "100%",
+        spread: "none",
+        allowScriptedContent: true
     });
 
+    // Hook para preparar o iframe para acessibilidade
     rendicao.hooks.display.register((view) => {
         const iframe = view.iframe;
         if (iframe) {
             iframe.title = "Conteúdo do livro";
-            iframe.tabIndex = 0; // Você já tinha isso
+            iframe.setAttribute('aria-label', 'Conteúdo do livro. Pressione Enter para entrar no modo de leitura.');
 
-            // ▼▼▼ ADICIONE ESTE BLOCO ▼▼▼
             const bookBody = view.document.body;
             if (bookBody) {
                 bookBody.id = 'book-content-body';

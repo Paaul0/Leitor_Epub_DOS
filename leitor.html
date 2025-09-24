@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/leitor.css">
     <title>Leitor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 
 <body>
 <div id="fixed-context-menu" role="toolbar" aria-label="Menu de ferramentas de texto">
-    <button id="btn-toggle-fixed-menu" title="Recolher menu" aria-label="Recolher ou expandir menu de ferramentas" aria-expanded="true">
+    <button id="btn-toggle-fixed-menu" title="Recolher menu" aria-label="Recolher ou expandir menu de ferramentas"
+            aria-expanded="true">
         <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtNTYwLTMyMC01Ni01NiAxNDQtMTQ0LTE0NC0xNDQgNTYtNTYgMjAwIDIwMC0yMDAgMjAwWiIvPjwvc3ZnPg==">
     </button>
@@ -34,8 +33,10 @@
             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzAwLTI0MHEtNTEgMC04MS0yNy41VDE4OS0zNDBxMC00NCAzNC41LTcyLjVUMzEyLTQ0MXEyMyAwIDQ1IDR0MzggMTF2LTEycTAtMjktMjAuNS00N1QzMjAtNTAzcS0yMyAwLTQyIDkuNVQyNDUtNDY2bC00Ny0zNXEyNC0yOSA1NC41LTQzdDY4LjUtMTRxNjkgMCAxMDMgMzIuNXQzNCA5Ny41djE3OGgtNjN2LTM3aC00cS0xNCAyMy0zOCAzNXQtNTMgMTJabTEyLTU0cTM1IDAgNTkuNS0yNHQyNC41LTU2cS0xNC04LTMzLjUtMTIuNVQzMjQtMzkxcS0zMiAwLTUwIDE0dC0xOCAzN3EwIDIwIDE2IDMzdDQwIDEzWm0zODggNTRMNTQwLTQwMGw1Ni01NiA2NCA2NHYtMjQ4aDgwdjI0OGw2NC02NCA1NiA1Ni0xNjAgMTYwWiIvPjwvc3ZnPg=="> </button>
     </div>
 </div>
-<button class="btn" id="btn-show-sidebar" title="Mostrar Sumário" aria-label="Mostrar menu lateral e sumário" aria-controls="sidebar-completa">
-    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTI0MHYtODBoMjQwdjgwSDEyMFptMC0yMDB2LTgwaDQ4MHY4MEgxMjBabTAtMjAwdi04MGg3MjB2ODBIMTIwWiIvPjwvc3ZnPg==">
+<button class="btn" id="btn-show-sidebar" title="Mostrar Sumário" aria-label="Mostrar menu lateral e sumário"
+        aria-controls="sidebar-completa">
+    <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTI0MHYtODBoMjQwdjgwSDEyMFptMC0yMDB2LTgwaDQ4MHY4MEgxMjBabTAtMjAwdi04MGg3MjB2ODBIMTIwWiIvPjwvc3ZnPg==">
 </button>
 <header class="titulo">
     <p>Carregando livro...</p>
@@ -43,12 +44,14 @@
 <aside class="sidebar-completa" id="sidebar-completa" role="complementary">
     <div class="infos">
         <div class="home">
-            <button class="btn" id="btn-toggle-sidebar" title="Ocultar Sumário" aria-label="Ocultar menu lateral e sumário">
+            <button class="btn" id="btn-toggle-sidebar" title="Ocultar Sumário"
+                    aria-label="Ocultar menu lateral e sumário">
                 <img
                         src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTI0MHYtODBoNTIwdjgwSDEyMFptNjY0LTQwTDU4NC00ODBsMjAwLTIwMCA1NiA1Ni0xNDQgMTQ0IDE0NCAxNDQtNTYgNTZaTTEyMC00NDB2LTgwaDQwMHY4MEgxMjBabTAtMjAwdi04MGg1MjB2ODBIMTIwWiIvPjwvc3ZnPg==">
             </button>
             <div class="conf">
-                <button class="btn" id="btn-search" title="Pesquisar" aria-label="Pesquisar no livro" aria-expanded="false" aria-controls="search-bar"><img
+                <button class="btn" id="btn-search" title="Pesquisar" aria-label="Pesquisar no livro"
+                        aria-expanded="false" aria-controls="search-bar"><img
                         src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNzg0LTEyMCA1MzItMzcycS0zMCAyNC02OSAzOHQtODMgMTRxLTEwOSAwLTE4NC41LTc1LjVUMTIwLTU4MHEwLTEwOSA3NS41LTE4NC41VDM4MC04NDBxMTA5IDAgMTg0LjUgNzUuNVQ2NDAtNTgwcTAgNDQtMTQgODN0LTM4IDY5bDI1MiAyNTItNTYgNTZaTTM4MC00MDBxNzUgMCAxMjcuNS01Mi41VDU2MC01ODBxMC03NS01Mi41LTEyNy41VDM4MC03NjBxLTc1IDAtMTI3LjUgNTIuNVQyMDAtNTgwcTAgNzUgNTIuNSAxMjcuNVQzODAtNDAwWiIvPjwvc3ZnPg=="></button>
                 <button class="btn" id="btn-menu" title="Menu" aria-label="Abrir menu de configurações de leitura"><img
                         src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtMzcwLTgwLTE2LTEyOHEtMTMtNS0yNC41LTEyVDMwNy0yMzVsLTExOSA1MEw3OC0zNzVsMTAzLTc4cS0xLTctMS0xMy41di0yN3EwLTYuNSAxLTEzLjVMNzgtNTg1bDExMC0xOTAgMTE5IDUwcTExLTggMjMtMTV0MjQtMTJsMTYtMTI4aDIyMGwxNiAxMjhxMTMgNSAyNC41IDEydDIyLjUgMTVsMTE5LTUwIDExMCAxOTAtMTAzIDc4cTEgNyAxIDEzLjV2MjdxMCA2LjUtMiAxMy41bDEwMyA3OC0xMTAgMTkwLTExOC01MHEtMTEgOC0yMyAxNXQtMjQgMTJMNTkwLTgwSDM3MFptNzAtODBoNzlsMTQtMTA2cTMxLTggNTcuNS0yMy41VDYzOS0zMjdsOTkgNDEgMzktNjgtODYtNjVxNS0xNCA3LTI5LjV0Mi0zMS41cTAtMTYtMi0zMS41dC03LTI5LjVsODYtNjUtMzktNjgtOTkgNDJxLTIyLTIzLTQ4LjUtMzguNVQ1MzMtNjk4bC0xMy0xMDZoLTc5bC0xNCAxMDZxLTMxIDgtNTcuNSAyMy41VDMyMS02MzNsLTk5LTQxLTM5IDY4IDg2IDY0cS01IDE1LTcgMzB0LTIgMzJxMCAxNiAyIDMxdDcgMzBsLTg2IDY1IDM5IDY4IDk5LTQycTIyIDIzIDQ4LjUgMzguNVQ0MjctMjY2bDEzIDEwNlptNDItMTgwcTU4IDAgOTktNDF0NDEtOTlxMC01OC00MS05OXQtOTktNDFxLTU5IDAtOTkuNSA0MVQzNDItNDgwcTAgNTggNDAuNSA5OXQ5OS41IDQxWm0tMi0xNDBaIi8+PC9zdmc+"></button>
@@ -56,26 +59,31 @@
         </div>
         <div id="search-bar" role="search">
             <div class="search-main-controls">
-                <input type="text" id="search-input" placeholder="Pesquisar no livro..." aria-label="Campo de pesquisa no livro">
+                <input type="text" id="search-input" placeholder="Pesquisar no livro..."
+                       aria-label="Campo de pesquisa no livro">
                 <button id="close-search-btn" aria-label="Fechar barra de pesquisa">X</button>
             </div>
             <div id="search-nav-controls">
                 <span id="search-results-info" aria-live="polite"></span>
                 <div class="search-buttons">
-                    <button id="search-prev-btn" title="Resultado anterior" aria-label="Ir para resultado anterior" disabled>&lt;</button>
-                    <button id="search-next-btn" title="Próximo resultado" aria-label="Ir para próximo resultado" disabled>&gt;</button>
+                    <button id="search-prev-btn" title="Resultado anterior" aria-label="Ir para resultado anterior"
+                            disabled>&lt;</button>
+                    <button id="search-next-btn" title="Próximo resultado" aria-label="Ir para próximo resultado"
+                            disabled>&gt;</button>
                 </div>
             </div>
         </div>
         <div class="info_liv">
         </div>
-        </div>
+    </div>
     <div class="toc" role="navigation" aria-label="Sumário do livro">
-        <div id="sumario-container" tabindex="0"></div>
+        <div id="sumario-container"></div>
         <div class="toc-footer">
-            <button class="btn" id="btn-ler-livro" title="Ler o livro em voz alta" aria-label="Ler o livro inteiro em voz alta">
+            <button class="btn" id="btn-ler-livro" title="Ler o livro em voz alta"
+                    aria-label="Ler o livro inteiro em voz alta">
             </button>
-            <select id="speech-speed-control" title="Velocidade da Leitura" aria-label="Selecione a velocidade da leitura em voz alta">
+            <select id="speech-speed-control" title="Velocidade da Leitura"
+                    aria-label="Selecione a velocidade da leitura em voz alta">
                 <option value="0.75">0.75x</option>
                 <option value="1" selected>1x (Normal)</option>
                 <option value="1.25">1.25x</option>
@@ -86,6 +94,7 @@
     </div>
 </aside>
 <main class="leitor" role="main">
+    <button id="iframe-focus-proxy" class="visually-hidden" aria-label="Conteúdo do livro. Pressione Enter para entrar no modo de leitura." disabled></button>
     <div id="leitor"></div>
 </main>
 <footer class="progresso">
@@ -107,9 +116,12 @@
             <span class="chapter-title" id="menu-chapter-title">Título do Capítulo</span>
         </header>
         <div class="menu-tabs" role="tablist" aria-label="Abas de configurações">
-            <button class="menu-tab-btn active" data-target="panel-sumario" role="tab" aria-selected="true" aria-controls="panel-sumario">Sumário</button>
-            <button class="menu-tab-btn" data-target="panel-exibicao" role="tab" aria-selected="false" aria-controls="panel-exibicao">Exibição</button>
-            <button class="menu-tab-btn" data-target="panel-notas" role="tab" aria-selected="false" aria-controls="panel-notas">Notas</button>
+            <button class="menu-tab-btn active" data-target="panel-sumario" role="tab" aria-selected="true"
+                    aria-controls="panel-sumario">Sumário</button>
+            <button class="menu-tab-btn" data-target="panel-exibicao" role="tab" aria-selected="false"
+                    aria-controls="panel-exibicao">Exibição</button>
+            <button class="menu-tab-btn" data-target="panel-notas" role="tab" aria-selected="false"
+                    aria-controls="panel-notas">Notas</button>
         </div>
         <div class="menu-panels">
             <div class="menu-panel active" id="panel-sumario" role="tabpanel" aria-labelledby="tab-sumario"></div>

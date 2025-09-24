@@ -1,18 +1,10 @@
 /**
  * uiManager.js
  * Módulo para controlar todos os elementos e eventos da interface do usuário (DOM).
- * VERSÃO CORRIGIDA: Inclui lógica "inteligente" para o modo noturno.
  */
 
 import { livro, rendicao, irPara } from './epubService.js';
 import { savedAnnotations, reaplicarAnotacoes } from './annotations.js';
-
-function anunciar(message) {
-    const announcer = document.getElementById('a11y-announcer');
-    if (announcer) {
-        announcer.textContent = message;
-    }
-}
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
@@ -22,12 +14,8 @@ const progressoInfo = document.getElementById('progresso-info');
 const infoLivEl = document.querySelector('.info_liv');
 const sumarioContainer = document.getElementById('sumario-container');
 const body = document.body;
-
-// Sidebar
 const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 const btnShowSidebar = document.getElementById('btn-show-sidebar');
-
-// Menu Modal
 const menuModal = document.getElementById('menu-modal');
 const btnMenu = document.getElementById('btn-menu');
 const closeMenuModalBtn = document.getElementById('close-menu-modal-btn');
@@ -36,48 +24,146 @@ const panelSumarioModal = document.getElementById('panel-sumario');
 const panelNotas = document.getElementById('panel-notas');
 const tabButtons = document.querySelectorAll('.menu-tab-btn');
 const tabPanels = document.querySelectorAll('.menu-panel');
-
-// Painel de Exibição (dentro do Modal)
 const decreaseFontBtn = document.getElementById('decrease-font');
 const increaseFontBtn = document.getElementById('increase-font');
+const fixedDecreaseFontBtn = document.getElementById('fixed-decrease-font-btn');
+const fixedIncreaseFontBtn = document.getElementById('fixed-increase-font-btn');
 const fontSizeSlider = document.getElementById('font-size-slider');
 const fontSelect = document.getElementById('font-select');
 const themeRadios = document.querySelectorAll('input[name="theme"]');
 const layoutRadios = document.querySelectorAll('input[name="layout"]');
-
-// Menu Fixo
-const fixedDecreaseFontBtn = document.getElementById('fixed-decrease-font-btn');
-const fixedIncreaseFontBtn = document.getElementById('fixed-increase-font-btn');
-
-// Lightbox
 const imageLightbox = document.getElementById('image-lightbox');
 const lightboxImg = document.getElementById('lightbox-img');
 const closeLightboxBtn = document.querySelector('.close-lightbox');
+const mainPageElements = document.querySelectorAll('header, aside, main, footer, #fixed-context-menu, #btn-show-sidebar');
+
 
 // ==========================================================================
 // Estado e Configurações da UI
 // ==========================================================================
 let currentTheme = 'claro';
 let currentFontSize = 100;
-
 const THEMES = {
-    claro: {
-        ui: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
-        content: { 'body': { 'background': '#FFFFFF', 'color': '#000000 !important' } }
-    },
-    sepia: {
-        ui: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' },
-        content: { 'body': { 'background': '#fbf0d9', 'color': '#5b4636 !important' } }
-    },
-    noturno: {
-        ui: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' },
-        content: { 'body': { 'background': '#383B43', 'color': '#E0E0E0 !important' } }
-    }
+    claro: { ui: { bg: '#FFFFFF', text: '#000000', border: '#ddd' }, content: { 'body': { 'background': '#FFFFFF', 'color': '#000000 !important' } } },
+    sepia: { ui: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' }, content: { 'body': { 'background': '#fbf0d9', 'color': '#5b4636 !important' } } },
+    noturno: { ui: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' }, content: { 'body': { 'background': '#383B43', 'color': '#E0E0E0 !important' } } }
 };
 
+// ==========================================================================
+// Funções de Acessibilidade
+// ==========================================================================
+
+function anunciar(message) {
+    const announcer = document.getElementById('a11y-announcer');
+    if (announcer) {
+        announcer.textContent = message;
+    }
+}
+
+function setupGlobalFocusManagement() {
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Tab') return;
+
+        const modal = document.getElementById('menu-modal');
+        const isModalVisible = modal.classList.contains('visible');
+        const searchContext = isModalVisible ? modal : document.body;
+
+        // MUDANÇA CRÍTICA AQUI: Removemos 'iframe' e adicionamos nosso botão 'proxy'
+        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, #iframe-focus-proxy, [tabindex]:not([tabindex="-1"])';
+
+        const focusableElements = Array.from(searchContext.querySelectorAll(query));
+
+        // MUDANÇA CRÍTICA AQUI: A regra de exceção para o iframe foi removida.
+        const visibleFocusableElements = focusableElements.filter(el => {
+            const style = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+        });
+
+        if (visibleFocusableElements.length === 0) {
+            event.preventDefault();
+            return;
+        }
+
+        const currentIndex = visibleFocusableElements.indexOf(document.activeElement);
+        const isTabbingBackward = event.shiftKey;
+        let nextIndex = 0;
+
+        if (isTabbingBackward) {
+            nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
+        } else {
+            nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
+        }
+
+        event.preventDefault();
+        visibleFocusableElements[nextIndex].focus();
+    });
+}
+
+/**
+ * Usa o botão "proxy" para gerenciar a entrada no modo de leitura,
+ * imitando o comportamento de um clique de mouse para ativar a navegação por Tab.
+ */
+function setupIframeProxyListeners() {
+    const proxyButton = document.getElementById('iframe-focus-proxy');
+    if (!proxyButton) return;
+
+    proxyButton.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+
+            const bookIframe = document.querySelector('#leitor iframe');
+            if (bookIframe) {
+                const innerDoc = bookIframe.contentDocument;
+                if (!innerDoc) return;
+
+                // Define o que é um elemento focável DENTRO do livro
+                const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled])';
+                const firstFocusableInBook = innerDoc.querySelector(query);
+
+                if (firstFocusableInBook) {
+                    // CENÁRIO 1: A página atual tem links ou botões.
+                    // Focamos no primeiro deles para iniciar a navegação com Tab.
+                    firstFocusableInBook.focus();
+                    anunciar("Navegação iniciada no conteúdo do livro.");
+                } else {
+                    // CENÁRIO 2: A página é apenas texto.
+                    // Voltamos ao comportamento antigo: focamos no corpo do texto
+                    // para habilitar a navegação por setas do leitor de tela.
+                    const bookBody = innerDoc.getElementById('book-content-body');
+                    if (bookBody) {
+                        bookBody.focus();
+                        anunciar("Modo de leitura ativado. Use as setas do teclado para navegar pelo texto.");
+                    }
+                }
+            }
+        }
+    });
+}
 
 // ==========================================================================
-// Funções de Renderização e Atualização da UI
+// Funções do Lightbox Acessível
+// ==========================================================================
+function openLightbox(imageElement) {
+    mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
+    lightboxImg.src = imageElement.src;
+    imageLightbox.style.display = 'flex';
+    setTimeout(() => {
+        closeLightboxBtn.focus();
+    }, 100);
+}
+
+function closeLightbox() {
+    mainPageElements.forEach(el => el.removeAttribute('aria-hidden'));
+    imageLightbox.style.display = 'none';
+    const bookIframe = document.querySelector('#leitor iframe');
+    if (bookIframe) {
+        bookIframe.focus();
+    }
+}
+
+// ==========================================================================
+// Funções de Renderização e UI
 // ==========================================================================
 
 export function atualizarTitulo(titulo) {
@@ -124,19 +210,13 @@ function gerarSumario(container, emModal = false) {
 
 function renderNotesPanel() {
     panelNotas.innerHTML = '';
-
-    // Filtra para pegar apenas as anotações que têm um comentário escrito.
     const notesWithComments = savedAnnotations.filter(ann => ann.type === 'annotation' && ann.note);
 
-    // Renderiza as anotações na tela, como antes.
     if (notesWithComments.length > 0) {
         notesWithComments.forEach(annotation => {
             const noteItem = document.createElement('div');
             noteItem.className = 'note-item';
-            noteItem.innerHTML = `
-                <blockquote class="note-text">"${annotation.text}"</blockquote>
-                <p class="note-comment">${annotation.note}</p>
-            `;
+            noteItem.innerHTML = `<blockquote class="note-text">"${annotation.text}"</blockquote><p class="note-comment">${annotation.note}</p>`;
             noteItem.addEventListener('click', () => {
                 irPara(annotation.cfi);
                 menuModal.classList.remove('visible');
@@ -147,62 +227,38 @@ function renderNotesPanel() {
         panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez anotações.</p>';
     }
 
-    // --- INÍCIO DA NOVA FUNCIONALIDADE ---
-
-    // 1. Cria o botão de exportação
     const exportButton = document.createElement('button');
     exportButton.id = 'btn-export-notes';
     exportButton.textContent = 'Exportar para .txt';
-    // Reutiliza uma classe de botão existente para manter o estilo
     exportButton.className = 'kindle-button';
     exportButton.style.marginTop = '20px';
     panelNotas.appendChild(exportButton);
-
-    // Desativa o botão se não houver notas para exportar
     if (notesWithComments.length === 0) {
         exportButton.disabled = true;
     }
-
-    // 2. Adiciona a lógica para o clique no botão
     exportButton.addEventListener('click', () => {
-        // Pega o título do livro para o nome do arquivo e conteúdo
         const bookTitle = livro.packaging.metadata.title || 'livro';
-        const sanitizedTitle = bookTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const sanitizedTitle = bookTitle.replace(/[^a-z09]/gi, '_').toLowerCase();
         const filename = `notas_${sanitizedTitle}.txt`;
-
-        // 3. Formata o conteúdo do arquivo de texto
-        let fileContent = `Anotações do Livro: ${bookTitle}\n\n`;
-        fileContent += "========================================\n\n";
-
+        let fileContent = `Anotações do Livro: ${bookTitle}\n\n========================================\n\n`;
         notesWithComments.forEach((ann, index) => {
-            fileContent += `ANOTAÇÃO #${index + 1}\n\n`;
-            fileContent += `Trecho Grifado:\n"${ann.text}"\n\n`;
-            fileContent += `Seu Comentário:\n${ann.note}\n\n`;
-            fileContent += "----------------------------------------\n\n";
+            fileContent += `ANOTAÇÃO #${index + 1}\n\nTrecho Grifado:\n"${ann.text}"\n\nSeu Comentário:\n${ann.note}\n\n----------------------------------------\n\n`;
         });
-
-        // 4. Cria o arquivo e inicia o download
         const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
-        document.body.appendChild(a); // Adiciona o link ao corpo da página
-        a.click(); // Simula o clique para iniciar o download
-        document.body.removeChild(a); // Remove o link após o clique
-        URL.revokeObjectURL(url); // Libera a memória
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 }
 
-/**
- * Aplica o tema na interface principal da aplicação (fora do conteúdo do livro).
- * @param {string} themeName - O nome do tema ('claro', 'sepia', 'noturno').
- */
 function applyUiTheme(themeName) {
     const theme = THEMES[themeName].ui;
-
     document.querySelector('.leitor').style.backgroundColor = theme.bg;
-
     document.querySelector('.titulo').style.backgroundColor = theme.bg;
     document.querySelector('.titulo p').style.color = theme.text;
     document.querySelector('.progresso').style.backgroundColor = theme.bg;
@@ -210,190 +266,20 @@ function applyUiTheme(themeName) {
     progressoInfo.style.color = theme.text;
 }
 
-/**
- * @param {object} contents
- */
 function applySmartNightMode(contents) {
     const isColorLight = (colorStr) => {
-        if (!colorStr || colorStr === 'transparent' || colorStr.startsWith('rgba(0, 0, 0, 0)')) {
-            return false;
-        }
+        if (!colorStr || colorStr === 'transparent' || colorStr.startsWith('rgba(0, 0, 0, 0)')) return false;
         try {
             const [r, g, b] = colorStr.match(/\d+/g).map(Number);
-            // Fórmula de luminância para determinar o brilho
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-            return luminance > 186; // Limiar para considerar uma cor como "clara"
-        } catch (e) {
-            return false;
-        }
+            return luminance > 186;
+        } catch (e) { return false; }
     };
-
     const elementsToCheck = contents.document.body.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote');
     elementsToCheck.forEach(el => {
         const style = contents.window.getComputedStyle(el);
-        const bgColor = style.backgroundColor;
-
-        if (isColorLight(bgColor)) {
+        if (isColorLight(style.backgroundColor)) {
             el.style.setProperty('color', '#111111', 'important');
-        }
-    });
-}
-
-/**
- * Assume o controle total da navegação por Tab de forma inteligente.
- * Se o modal estiver aberto, prende o foco dentro dele.
- * Se o modal estiver fechado, gerencia o foco na página principal.
- */
-function setupGlobalFocusManagement() {
-    document.addEventListener('keydown', (event) => {
-        if (event.key !== 'Tab') {
-            return; // Se não for a tecla Tab, não faz nada.
-        }
-
-        const modal = document.getElementById('menu-modal');
-        const isModalVisible = modal.classList.contains('visible');
-
-        // Define o "contexto" da nossa busca: o modal ou a página inteira.
-        const searchContext = isModalVisible ? modal : document.body;
-
-        // 1. Define o que é um elemento focável.
-        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
-
-        // 2. Cria uma lista com todos os elementos focáveis DENTRO DO CONTEXTO ATUAL.
-        const focusableElements = Array.from(searchContext.querySelectorAll(query));
-
-        // 3. Filtra a lista para incluir apenas os que estão VISÍVEIS na tela.
-        const visibleFocusableElements = focusableElements.filter(el => {
-            const style = getComputedStyle(el);
-
-            // REGRA DE EXCEÇÃO PARA O IFRAME:
-            // Considera-o visível se não estiver explicitamente escondido.
-            if (el.tagName === 'IFRAME') {
-                return style.visibility !== 'hidden' && style.display !== 'none';
-            }
-
-            // Mantém a regra rigorosa para todos os outros elementos.
-            const rect = el.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
-        });
-
-        if (visibleFocusableElements.length === 0) {
-            event.preventDefault();
-            return;
-        }
-
-        // 4. Identifica a posição do elemento atualmente focado.
-        const currentIndex = visibleFocusableElements.indexOf(document.activeElement);
-        const isTabbingBackward = event.shiftKey;
-
-        // 5. Calcula qual será o próximo elemento a receber foco, criando um loop.
-        let nextIndex = 0;
-        if (isTabbingBackward) {
-            nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
-        } else {
-            nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
-        }
-
-        // 6. Impede o navegador de agir e move o foco manualmente.
-        event.preventDefault();
-        visibleFocusableElements[nextIndex].focus();
-    });
-}
-
-// No arquivo: uiManager.js
-
-// -- INÍCIO DO NOVO BLOCO DE CÓDIGO --
-
-// Variáveis de controle para o nosso modal
-const mainPageElements = document.querySelectorAll('header, aside, main, footer, #fixed-context-menu, #btn-show-sidebar');
-let modalKeydownListener = null; // Guarda a função do listener para podermos removê-la depois
-let escapeKeyListener = null;    // Guarda a função do listener da tecla Escape
-
-/**
- * Fecha o modal se a tecla Escape for pressionada.
- * @param {KeyboardEvent} event
- */
-function handleEscapeKey(event) {
-    if (event.key === 'Escape') {
-        closeMenuModal();
-    }
-}
-
-/**
- * Abre e gerencia o modal de menu, aplicando todas as regras de acessibilidade.
- */
-function openMenuModal() {
-    mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
-    btnMenu.setAttribute('aria-expanded', 'true');
-
-    menuModal.classList.add('visible');
-
-    const focusableElementsQuery = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const focusableElements = Array.from(menuModal.querySelectorAll(focusableElementsQuery));
-    const firstFocusableElement = focusableElements[0];
-    const lastFocusableElement = focusableElements[focusableElements.length - 1];
-
-    setTimeout(() => {
-        firstFocusableElement.focus();
-    }, 100);
-
-    modalKeydownListener = (event) => {
-        if (event.key !== 'Tab') return;
-
-        if (event.shiftKey) {
-            if (document.activeElement === firstFocusableElement) {
-                event.preventDefault();
-                lastFocusableElement.focus();
-            }
-        } else {
-            if (document.activeElement === lastFocusableElement) {
-                event.preventDefault();
-                firstFocusableElement.focus();
-            }
-        }
-    };
-
-    menuModal.addEventListener('keydown', modalKeydownListener);
-    document.addEventListener('keydown', handleEscapeKey);
-}
-
-/**
- * Fecha o modal de menu e restaura o estado da página.
- */
-function closeMenuModal() {
-    menuModal.removeEventListener('keydown', modalKeydownListener);
-    document.removeEventListener('keydown', handleEscapeKey);
-
-    mainPageElements.forEach(el => el.removeAttribute('aria-hidden'));
-    btnMenu.setAttribute('aria-expanded', 'false');
-
-    menuModal.classList.remove('visible');
-
-    btnMenu.focus();
-}
-
-/**
- * Ativa o "Modo de Leitura", permitindo que usuários de leitores de tela
- * naveguem pelo texto do livro com comandos padrão.
- */
-function setupReadingMode() {
-    const leitorArea = document.getElementById('leitor');
-
-    leitorArea.addEventListener('keydown', (event) => {
-        // Verifica se o foco está no iframe principal e se a tecla foi Enter
-        const bookIframe = leitorArea.querySelector('iframe');
-        if (document.activeElement === bookIframe && event.key === 'Enter') {
-            event.preventDefault(); // Impede qualquer ação padrão
-
-            // Encontra o corpo do documento DENTRO do iframe
-            const bookBody = bookIframe.contentDocument.getElementById('book-content-body');
-
-            if (bookBody) {
-                // Move o foco do teclado para dentro do livro
-                bookBody.focus();
-                // Anuncia a mudança de modo para o usuário
-                anunciar("Modo de leitura ativado. Use as setas do teclado para navegar pelo texto.");
-            }
         }
     });
 }
@@ -403,11 +289,9 @@ function setupReadingMode() {
 // ==========================================================================
 
 export function initUIManager() {
-    // ---- Navegação Principal ----
     document.getElementById("anterior").addEventListener("click", () => rendicao.prev());
     document.getElementById("proximo").addEventListener("click", () => rendicao.next());
 
-    // ---- Sidebar ----
     btnToggleSidebar?.addEventListener('click', () => {
         body.classList.add('sidebar-collapsed');
         setTimeout(() => rendicao?.resize(), 400);
@@ -425,49 +309,41 @@ export function initUIManager() {
         gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
 
-        openMenuModal();
+        mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
+        btnMenu.setAttribute('aria-expanded', 'true');
+        menuModal.classList.add('visible');
+        setTimeout(() => {
+            closeMenuModalBtn.focus();
+        }, 100);
     });
+
+    const closeMenuModal = () => {
+        mainPageElements.forEach(el => el.removeAttribute('aria-hidden'));
+        btnMenu.setAttribute('aria-expanded', 'false');
+        menuModal.classList.remove('visible');
+        btnMenu.focus();
+    };
+
     closeMenuModalBtn.addEventListener('click', closeMenuModal);
-    menuModal.addEventListener('click', (e) => {
-        // Fecha apenas se o clique for no fundo escuro, não no conteúdo
-        if (e.target === menuModal) {
-            closeMenuModal();
-        }
-    });
+    menuModal.addEventListener('click', (e) => { if (e.target === menuModal) closeMenuModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && menuModal.classList.contains('visible')) closeMenuModal(); });
 
     // ---- Abas do Menu Modal ----
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Desativa todas as abas e painéis
-            tabButtons.forEach(btn => {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-selected', 'false');
-            });
-            tabPanels.forEach(panel => {
-                panel.classList.remove('active');
-            });
-
-            // Ativa o botão e o painel clicado
+            tabButtons.forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
+            tabPanels.forEach(panel => panel.classList.remove('active'));
             button.classList.add('active');
             button.setAttribute('aria-selected', 'true');
             const targetPanel = document.getElementById(button.dataset.target);
             targetPanel.classList.add('active');
-
-            // --- A MÁGICA DA CORREÇÃO ACONTECE AQUI ---
-            // Em vez de focar no painel, procuramos o primeiro item focável DENTRO dele.
             const firstFocusable = targetPanel.querySelector('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-
-            // Se encontrarmos um item, movemos o foco para ele.
-            if (firstFocusable) {
-                firstFocusable.focus();
-            }
+            if (firstFocusable) firstFocusable.focus();
         });
     });
 
     // ---- Painel de Exibição ----
-    Object.keys(THEMES).forEach(name => {
-        rendicao.themes.register(name, THEMES[name].content);
-    });
+    Object.keys(THEMES).forEach(name => rendicao.themes.register(name, THEMES[name].content));
 
     const updateFontSize = () => {
         fontSizeSlider.value = currentFontSize;
@@ -475,12 +351,35 @@ export function initUIManager() {
         setTimeout(reaplicarAnotacoes, 100);
         anunciar(`Tamanho da fonte ${currentFontSize}%`);
     };
-    decreaseFontBtn.addEventListener('click', () => { if (currentFontSize > 80) { currentFontSize -= 10; updateFontSize(); } });
-    increaseFontBtn.addEventListener('click', () => { if (currentFontSize < 200) { currentFontSize += 10; updateFontSize(); } });
+
+    const handleFontButtonClick = (isIncreasing) => {
+        if (isIncreasing) {
+            if (currentFontSize < 200) currentFontSize += 10;
+        } else {
+            if (currentFontSize > 80) currentFontSize -= 10;
+        }
+        updateFontSize();
+    };
+
+    decreaseFontBtn.addEventListener('click', () => handleFontButtonClick(false));
+    increaseFontBtn.addEventListener('click', () => handleFontButtonClick(true));
+    fixedDecreaseFontBtn.addEventListener('click', () => handleFontButtonClick(false));
+    fixedIncreaseFontBtn.addEventListener('click', () => handleFontButtonClick(true));
+
+    const handleKeydownOnFontButtons = (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            event.currentTarget.click();
+        }
+    };
+    decreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
+    increaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
+    fixedDecreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
+    fixedIncreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
+
     fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
     fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
 
-    // Lógica de troca de tema
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyUiTheme(currentTheme);
@@ -491,53 +390,27 @@ export function initUIManager() {
     layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
 
     // ---- Lightbox ----
-    closeLightboxBtn?.addEventListener('click', () => imageLightbox.style.display = 'none');
-    imageLightbox?.addEventListener('click', (e) => {
-        if (e.target === imageLightbox) imageLightbox.style.display = 'none';
-    });
+    closeLightboxBtn?.addEventListener('click', closeLightbox);
+    imageLightbox?.addEventListener('click', (e) => { if (e.target === imageLightbox) closeLightbox(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && imageLightbox.style.display === 'flex') closeLightbox(); });
 
     gerarSumario(sumarioContainer, false);
     setupGlobalFocusManagement();
-    setupReadingMode();
+    setupIframeProxyListeners();
 }
 
 // ==========================================================================
-// Hooks para o conteúdo do livro (executado para cada capítulo)
+// Hooks para o conteúdo do livro
 // ==========================================================================
 
 export function setupContentHooks() {
     rendicao.hooks.content.register((contents) => {
-
         const style = contents.document.createElement('style');
-        style.innerHTML = `
-            /* Espaçamento entre parágrafos (Restaurado) */
-            p {
-                margin-bottom: 1.5em;
-            }
-
-            /* Estilos para imagens e SVGs responsivos (Restaurado) */
-            img, svg {
-                max-width: 100% !important;
-                max-height: 95vh !important;
-                height: auto !important;
-                width: auto;
-                object-fit: contain;
-                display: block;
-                margin: 0 auto;
-            }
-
-            /* Cor da seleção de texto (Restaurado) */
-            ::selection {
-                background-color: #D3D3D3;
-            }
-        `;
+        style.innerHTML = `p { margin-bottom: 1.5em; } img, svg { max-width: 100% !important; max-height: 95vh !important; height: auto !important; width: auto; object-fit: contain; display: block; margin: 0 auto; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
 
-
-        // --- LÓGICA DE TEMAS E FUNCIONALIDADES ---
         rendicao.themes.select(currentTheme);
         applyUiTheme(currentTheme);
-
         if (currentTheme === 'noturno') {
             applySmartNightMode(contents);
         }
@@ -546,8 +419,7 @@ export function setupContentHooks() {
         images.forEach(img => {
             img.style.cursor = 'pointer';
             img.addEventListener('click', () => {
-                lightboxImg.src = img.src;
-                imageLightbox.style.display = 'flex';
+                openLightbox(img);
             });
         });
 

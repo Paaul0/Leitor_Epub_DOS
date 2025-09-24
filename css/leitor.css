@@ -290,7 +290,6 @@ body.sidebar-collapsed #btn-show-sidebar {
     display: flex;
     flex-direction: column;
     align-items: center;
-    transition: opacity 0.2s ease-in-out;
 }
 
 #btn-toggle-fixed-menu {
@@ -484,19 +483,17 @@ body.sidebar-collapsed #btn-show-sidebar {
 .menu-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     padding: 10px 15px;
     background-color: #E8E8E8;
     flex-shrink: 0;
     border-bottom: 1px solid #D1D1D1;
-}
-
-menu-header .back-btn {
-    position: absolute;
-    left: 15px;
+    position: relative;
 }
 
 .menu-header .back-btn {
+    position: absolute;
+    left: 15px;
     background: none;
     border: none;
     color: #333333;
@@ -512,15 +509,6 @@ menu-header .back-btn {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0 10px;
-}
-
-.menu-header .tool-buttons button {
-    background: none;
-    border: none;
-    color: #333333;
-    font-size: 22px;
-    cursor: pointer;
-    margin-left: 15px;
 }
 
 .menu-tabs {
@@ -558,7 +546,9 @@ menu-header .back-btn {
 }
 
 .menu-panel.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .setting-group {
@@ -571,7 +561,8 @@ menu-header .back-btn {
     border-bottom: none;
 }
 
-.setting-group label {
+.setting-group > label,
+.setting-group > fieldset > legend {
     display: block;
     margin-bottom: 15px;
     font-size: 16px;
@@ -645,11 +636,6 @@ input[type="range"] {
     overflow: hidden;
     border: 0;
     clip: rect(0 0 0 0);
-}
-
-.theme-control input[type="radio"]:focus + .theme-preview {
-    outline: 2px solid #007AFF;
-    outline-offset: 2px;
 }
 
 .theme-control .theme-preview {
@@ -826,6 +812,19 @@ input[type="range"] {
     border-bottom: 2px solid red !important;
 }
 
+/* ==========================================================================
+   Estilos de Foco para Acessibilidade
+   ========================================================================== */
+#sumario-container a:focus,
+#panel-sumario a:focus {
+    outline: 2px solid black;
+}
+
+.theme-control input[type="radio"]:focus+.theme-preview {
+    outline: 2px solid #007AFF;
+    outline-offset: 2px;
+}
+
 .visually-hidden {
     position: absolute;
     opacity: 0;
@@ -838,8 +837,7 @@ input[type="range"] {
     clip: rect(0 0 0 0);
 }
 
-/* Adicione no final do arquivo */
-#sumario-container a:focus,
-#panel-sumario a:focus {
-    outline: 2px solid black;
+#leitor:focus-within {
+    outline: 3px solid #007AFF; /* Um contorno azul e grosso, impossível de ignorar */
+    outline-offset: -3px;      /* Coloca o contorno para dentro, para não causar "pulos" no layout */
 }
