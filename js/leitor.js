@@ -40,22 +40,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    let isFirstLoad = true; // Uma "bandeira" para executar a lógica apenas uma vez
+    let isFirstLoad = true;
 
     rendicao.on("relocated", (location) => {
         UIManager.atualizarProgresso(location);
-        UIManager.manageIframeFocusIndicator();
 
-        // --- INÍCIO DA CORREÇÃO ---
-        // Na primeira vez que uma página é carregada, ativamos o botão do modo de leitura.
         if (isFirstLoad) {
-            const proxyButton = document.getElementById('iframe-focus-proxy');
-            if (proxyButton) {
-                proxyButton.disabled = false;
-            }
-            isFirstLoad = false; // Impede que o código seja executado novamente
+            UIManager.setupIframeContentFocus();
+            isFirstLoad = false;
         }
-        // --- FIM DA CORREÇÃO ---
     });
 
     console.log("Sistema modular completo carregado!");

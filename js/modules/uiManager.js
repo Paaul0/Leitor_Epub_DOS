@@ -60,6 +60,10 @@ function anunciar(message) {
     }
 }
 
+/**
+ * Assume o controle total da navegação por Tab de forma inteligente.
+ * Contém uma regra de exceção para garantir que o iframe do livro seja incluído.
+ */
 function setupGlobalFocusManagement() {
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab') return;
@@ -68,14 +72,15 @@ function setupGlobalFocusManagement() {
         const isModalVisible = modal.classList.contains('visible');
         const searchContext = isModalVisible ? modal : document.body;
 
-        // MUDANÇA CRÍTICA AQUI: Removemos 'iframe' e adicionamos nosso botão 'proxy'
-        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, #iframe-focus-proxy, [tabindex]:not([tabindex="-1"])';
+        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
 
         const focusableElements = Array.from(searchContext.querySelectorAll(query));
 
-        // MUDANÇA CRÍTICA AQUI: A regra de exceção para o iframe foi removida.
         const visibleFocusableElements = focusableElements.filter(el => {
             const style = getComputedStyle(el);
+            if (el.tagName === 'IFRAME') {
+                return style.visibility !== 'hidden' && style.display !== 'none';
+            }
             const rect = el.getBoundingClientRect();
             return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
         });
@@ -97,47 +102,6 @@ function setupGlobalFocusManagement() {
 
         event.preventDefault();
         visibleFocusableElements[nextIndex].focus();
-    });
-}
-
-/**
- * Usa o botão "proxy" para gerenciar a entrada no modo de leitura,
- * imitando o comportamento de um clique de mouse para ativar a navegação por Tab.
- */
-function setupIframeProxyListeners() {
-    const proxyButton = document.getElementById('iframe-focus-proxy');
-    if (!proxyButton) return;
-
-    proxyButton.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-
-            const bookIframe = document.querySelector('#leitor iframe');
-            if (bookIframe) {
-                const innerDoc = bookIframe.contentDocument;
-                if (!innerDoc) return;
-
-                // Define o que é um elemento focável DENTRO do livro
-                const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled])';
-                const firstFocusableInBook = innerDoc.querySelector(query);
-
-                if (firstFocusableInBook) {
-                    // CENÁRIO 1: A página atual tem links ou botões.
-                    // Focamos no primeiro deles para iniciar a navegação com Tab.
-                    firstFocusableInBook.focus();
-                    anunciar("Navegação iniciada no conteúdo do livro.");
-                } else {
-                    // CENÁRIO 2: A página é apenas texto.
-                    // Voltamos ao comportamento antigo: focamos no corpo do texto
-                    // para habilitar a navegação por setas do leitor de tela.
-                    const bookBody = innerDoc.getElementById('book-content-body');
-                    if (bookBody) {
-                        bookBody.focus();
-                        anunciar("Modo de leitura ativado. Use as setas do teclado para navegar pelo texto.");
-                    }
-                }
-            }
-        }
     });
 }
 
@@ -284,6 +248,23 @@ function applySmartNightMode(contents) {
     });
 }
 
+/**
+ * Move o foco para dentro do conteúdo do livro automaticamente
+ * assim que o iframe recebe foco.
+ */
+export function setupIframeContentFocus() {
+    const bookIframe = document.querySelector('#leitor iframe');
+    if (!bookIframe) return;
+
+    bookIframe.addEventListener('focus', () => {
+        const bookBody = bookIframe.contentDocument.getElementById('book-content-body');
+        if (bookBody) {
+            bookBody.focus();
+            anunciar("Área de leitura. Use as setas para navegar no texto.");
+        }
+    });
+}
+
 // ==========================================================================
 // Inicializador Principal de Eventos da UI
 // ==========================================================================
@@ -396,7 +377,6 @@ export function initUIManager() {
 
     gerarSumario(sumarioContainer, false);
     setupGlobalFocusManagement();
-    setupIframeProxyListeners();
 }
 
 // ==========================================================================
