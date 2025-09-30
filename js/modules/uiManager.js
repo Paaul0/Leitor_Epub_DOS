@@ -1,6 +1,7 @@
 /**
  * uiManager.js
  * Módulo para controlar todos os elementos e eventos da interface do usuário (DOM).
+ * ***** VERSÃO FINAL, COMPLETA E CORRIGIDA *****
  */
 
 import { livro, rendicao, irPara } from './epubService.js';
@@ -42,15 +43,118 @@ const mainPageElements = document.querySelectorAll('header, aside, main, footer,
 // Estado e Configurações da UI
 // ==========================================================================
 let currentTheme = 'claro';
+let currentBookContents = null;
 let currentFontSize = 100;
-const THEMES = {
-    claro: { ui: { bg: '#FFFFFF', text: '#000000', border: '#ddd' }, content: { 'body': { 'background': '#FFFFFF', 'color': '#000000 !important' } } },
-    sepia: { ui: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' }, content: { 'body': { 'background': '#fbf0d9', 'color': '#5b4636 !important' } } },
-    noturno: { ui: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' }, content: { 'body': { 'background': '#383B43', 'color': '#E0E0E0 !important' } } }
+
+const UI_THEMES = {
+    claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
+    sepia: { bg: '#fbf0d9', text: '#5b4636', border: '#e9e0cb' },
+    noturno: { bg: '#383B43', text: '#E0E0E0', border: '#4a4e59' }
 };
 
 // ==========================================================================
-// Funções de Acessibilidade
+// LÓGICA DE TEMAS CORRIGIDA
+// ==========================================================================
+
+// Função para aplicar tema na INTERFACE (sidebar, header, etc.)
+function applyUiTheme(themeName) {
+    const theme = UI_THEMES[themeName];
+    if (!theme) return;
+    const readerElement = document.querySelector('.leitor');
+    if (readerElement) readerElement.style.backgroundColor = theme.bg;
+
+    const tituloElement = document.querySelector('.titulo');
+    if(tituloElement) tituloElement.style.backgroundColor = theme.bg;
+
+    const tituloP = document.querySelector('.titulo p');
+    if(tituloP) tituloP.style.color = theme.text;
+
+    const progressoElement = document.querySelector('.progresso');
+    if (progressoElement) {
+        progressoElement.style.backgroundColor = theme.bg;
+        progressoElement.style.borderTopColor = theme.border;
+    }
+    if (progressoInfo) progressoInfo.style.color = theme.text;
+}
+
+// Função para aplicar tema DENTRO DO LIVRO (iframe) - Lógica do seu leitorc.js
+function applyContentTheme(contents) {
+    if (!contents) return;
+    const oldStyle = contents.document.getElementById('theme-style');
+    if (oldStyle) oldStyle.remove();
+
+    const style = contents.document.createElement('style');
+    style.id = 'theme-style';
+    let css = '';
+
+    // Esta parte volta a ser como era antes, sem o seletor universal "*"
+    if (currentTheme === 'sepia') {
+        css = `body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
+               p, a, h1, h2, h3, h4, h5, h6, span { color: #5b4636 !important; }
+               a { color: #8a3c00 !important; }`;
+    } else if (currentTheme === 'noturno') {
+        css = `body { background-color: #383B43 !important; color: #E0E0E0 !important; }
+               p, a, h1, h2, h3, h4, h5, h6, span { color: #E0E0E0 !important; }
+               a { color: #8ab4f8 !important; }`;
+    }
+
+    if (css) {
+        style.innerHTML = css;
+        contents.document.head.appendChild(style);
+    }
+
+    // IMPORTANTE: Chama a nossa nova função para corrigir o texto nos fundos claros
+    if (currentTheme === 'noturno' || currentTheme === 'sepia') {
+        fixTextColorOnLightBackgrounds(contents);
+    }
+}
+
+// No arquivo: uiManager.js
+
+// SUBSTITUA a sua função 'fixTextColorOnLightBackgrounds' por esta:
+function fixTextColorOnLightBackgrounds(contents) {
+    // Função interna para checar se uma cor é "clara"
+    const isColorLight = (colorStr) => {
+        if (!colorStr || colorStr === 'transparent') return false;
+
+        // Lida com cores no formato RGBA. Se for transparente, não é clara.
+        if (colorStr.startsWith('rgba')) {
+            // Extrai o valor alfa (transparência)
+            const alpha = parseFloat(colorStr.split(',')[3]);
+            if (alpha < 0.5) { // Considera transparente se a opacidade for baixa
+                return false;
+            }
+        }
+
+        try {
+            const [r, g, b] = colorStr.match(/\d+/g).map(Number);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+            return luminance > 180; // Limite para considerar a cor como "clara"
+        } catch (e) {
+            // Fallback para nomes de cores comuns
+            return ['white', 'ivory', 'lightyellow', 'honeydew', 'seashell', 'whitesmoke', 'snow'].includes(colorStr.toLowerCase());
+        }
+    };
+
+    // Pega todos os elementos possíveis dentro do livro
+    const elementsToCheck = contents.document.body.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote');
+
+    elementsToCheck.forEach(el => {
+        const style = contents.window.getComputedStyle(el);
+
+        if (isColorLight(style.backgroundColor)) {
+            el.style.setProperty('color', '#000000', 'important');
+
+            const children = el.querySelectorAll('*');
+            children.forEach(child => {
+                child.style.setProperty('color', '#000000', 'important');
+            });
+        }
+    });
+}
+
+// ==========================================================================
+// Funções de Acessibilidade, UI, etc. (Mantidas do seu original)
 // ==========================================================================
 
 function anunciar(message) {
@@ -60,22 +164,14 @@ function anunciar(message) {
     }
 }
 
-/**
- * Assume o controle total da navegação por Tab de forma inteligente.
- * Contém uma regra de exceção para garantir que o iframe do livro seja incluído.
- */
 function setupGlobalFocusManagement() {
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab') return;
-
         const modal = document.getElementById('menu-modal');
         const isModalVisible = modal.classList.contains('visible');
         const searchContext = isModalVisible ? modal : document.body;
-
         const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
-
         const focusableElements = Array.from(searchContext.querySelectorAll(query));
-
         const visibleFocusableElements = focusableElements.filter(el => {
             const style = getComputedStyle(el);
             if (el.tagName === 'IFRAME') {
@@ -84,30 +180,23 @@ function setupGlobalFocusManagement() {
             const rect = el.getBoundingClientRect();
             return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
         });
-
         if (visibleFocusableElements.length === 0) {
             event.preventDefault();
             return;
         }
-
         const currentIndex = visibleFocusableElements.indexOf(document.activeElement);
         const isTabbingBackward = event.shiftKey;
         let nextIndex = 0;
-
         if (isTabbingBackward) {
             nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
         } else {
             nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
         }
-
         event.preventDefault();
         visibleFocusableElements[nextIndex].focus();
     });
 }
 
-// ==========================================================================
-// Funções do Lightbox Acessível
-// ==========================================================================
 function openLightbox(imageElement) {
     mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
     lightboxImg.src = imageElement.src;
@@ -126,19 +215,15 @@ function closeLightbox() {
     }
 }
 
-// ==========================================================================
-// Funções de Renderização e UI
-// ==========================================================================
-
 export function atualizarTitulo(titulo) {
-    tituloEl.textContent = titulo;
+    if(tituloEl) tituloEl.textContent = titulo;
     document.title = titulo;
 }
 
 export function atualizarProgresso(location) {
-    if (livro && location.start && livro.locations && livro.locations.length() > 0) {
+    if (livro && location && location.start && livro.locations && livro.locations.length() > 0) {
         const percentage = Math.floor(livro.locations.percentageFromCfi(location.start.cfi) * 100);
-        progressoInfo.textContent = `Progresso: ${percentage}%`;
+        if(progressoInfo) progressoInfo.textContent = `Progresso: ${percentage}%`;
     }
 }
 
@@ -147,7 +232,7 @@ export function atualizarInfoLivro(metadata) {
     let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
     if (creator) infoHtml += `<p class="book-author">Por: ${creator}</p>`;
     if (pubdate) infoHtml += `<p class="book-publisher">Publicado em: ${new Date(pubdate).getFullYear()}</p>`;
-    infoLivEl.innerHTML = infoHtml;
+    if(infoLivEl) infoLivEl.innerHTML = infoHtml;
 }
 
 function gerarSumario(container, emModal = false) {
@@ -173,6 +258,7 @@ function gerarSumario(container, emModal = false) {
 }
 
 function renderNotesPanel() {
+    if(!panelNotas) return;
     panelNotas.innerHTML = '';
     const notesWithComments = savedAnnotations.filter(ann => ann.type === 'annotation' && ann.note);
 
@@ -190,7 +276,6 @@ function renderNotesPanel() {
     } else {
         panelNotas.innerHTML = '<p style="text-align: center; color: #888;">Você ainda não fez anotações.</p>';
     }
-
     const exportButton = document.createElement('button');
     exportButton.id = 'btn-export-notes';
     exportButton.textContent = 'Exportar para .txt';
@@ -220,38 +305,6 @@ function renderNotesPanel() {
     });
 }
 
-function applyUiTheme(themeName) {
-    const theme = THEMES[themeName].ui;
-    document.querySelector('.leitor').style.backgroundColor = theme.bg;
-    document.querySelector('.titulo').style.backgroundColor = theme.bg;
-    document.querySelector('.titulo p').style.color = theme.text;
-    document.querySelector('.progresso').style.backgroundColor = theme.bg;
-    document.querySelector('.progresso').style.borderTopColor = theme.border;
-    progressoInfo.style.color = theme.text;
-}
-
-function applySmartNightMode(contents) {
-    const isColorLight = (colorStr) => {
-        if (!colorStr || colorStr === 'transparent' || colorStr.startsWith('rgba(0, 0, 0, 0)')) return false;
-        try {
-            const [r, g, b] = colorStr.match(/\d+/g).map(Number);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-            return luminance > 186;
-        } catch (e) { return false; }
-    };
-    const elementsToCheck = contents.document.body.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote');
-    elementsToCheck.forEach(el => {
-        const style = contents.window.getComputedStyle(el);
-        if (isColorLight(style.backgroundColor)) {
-            el.style.setProperty('color', '#111111', 'important');
-        }
-    });
-}
-
-/**
- * Move o foco para dentro do conteúdo do livro automaticamente
- * assim que o iframe recebe foco.
- */
 export function setupIframeContentFocus() {
     const bookIframe = document.querySelector('#leitor iframe');
     if (!bookIframe) return;
@@ -270,8 +323,8 @@ export function setupIframeContentFocus() {
 // ==========================================================================
 
 export function initUIManager() {
-    document.getElementById("anterior").addEventListener("click", () => rendicao.prev());
-    document.getElementById("proximo").addEventListener("click", () => rendicao.next());
+    document.getElementById("anterior")?.addEventListener("click", () => rendicao.prev());
+    document.getElementById("proximo")?.addEventListener("click", () => rendicao.next());
 
     btnToggleSidebar?.addEventListener('click', () => {
         body.classList.add('sidebar-collapsed');
@@ -282,12 +335,11 @@ export function initUIManager() {
         setTimeout(() => rendicao?.resize(), 400);
     });
 
-    // ---- Menu Modal ----
-    btnMenu.addEventListener('click', () => {
+    btnMenu?.addEventListener('click', () => {
         const currentLocation = rendicao.currentLocation();
-        const chapter = livro.navigation.get(currentLocation?.start?.href);
-        menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
-        gerarSumario(panelSumarioModal, true);
+        const chapter = currentLocation ? livro.navigation.get(currentLocation.start.href) : null;
+        if(menuChapterTitle) menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
+        if(panelSumarioModal) gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
 
         mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
@@ -305,11 +357,10 @@ export function initUIManager() {
         btnMenu.focus();
     };
 
-    closeMenuModalBtn.addEventListener('click', closeMenuModal);
-    menuModal.addEventListener('click', (e) => { if (e.target === menuModal) closeMenuModal(); });
+    closeMenuModalBtn?.addEventListener('click', closeMenuModal);
+    menuModal?.addEventListener('click', (e) => { if (e.target === menuModal) closeMenuModal(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && menuModal.classList.contains('visible')) closeMenuModal(); });
 
-    // ---- Abas do Menu Modal ----
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             tabButtons.forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
@@ -323,11 +374,8 @@ export function initUIManager() {
         });
     });
 
-    // ---- Painel de Exibição ----
-    Object.keys(THEMES).forEach(name => rendicao.themes.register(name, THEMES[name].content));
-
     const updateFontSize = () => {
-        fontSizeSlider.value = currentFontSize;
+        if(fontSizeSlider) fontSizeSlider.value = currentFontSize;
         rendicao.themes.fontSize(`${currentFontSize}%`);
         setTimeout(reaplicarAnotacoes, 100);
         anunciar(`Tamanho da fonte ${currentFontSize}%`);
@@ -342,10 +390,10 @@ export function initUIManager() {
         updateFontSize();
     };
 
-    decreaseFontBtn.addEventListener('click', () => handleFontButtonClick(false));
-    increaseFontBtn.addEventListener('click', () => handleFontButtonClick(true));
-    fixedDecreaseFontBtn.addEventListener('click', () => handleFontButtonClick(false));
-    fixedIncreaseFontBtn.addEventListener('click', () => handleFontButtonClick(true));
+    decreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(false));
+    increaseFontBtn?.addEventListener('click', () => handleFontButtonClick(true));
+    fixedDecreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(false));
+    fixedIncreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(true));
 
     const handleKeydownOnFontButtons = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -353,47 +401,44 @@ export function initUIManager() {
             event.currentTarget.click();
         }
     };
-    decreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
-    increaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
-    fixedDecreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
-    fixedIncreaseFontBtn.addEventListener('keydown', handleKeydownOnFontButtons);
+    decreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
+    increaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
+    fixedDecreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
+    fixedIncreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
 
-    fontSizeSlider.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
-    fontSelect.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
+    fontSizeSlider?.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
+    fontSelect?.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
 
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyUiTheme(currentTheme);
-        rendicao.themes.select(currentTheme);
+        applyContentTheme(currentBookContents);
         anunciar(`Tema alterado para ${currentTheme}`);
     }));
 
     layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
 
-    // ---- Lightbox ----
     closeLightboxBtn?.addEventListener('click', closeLightbox);
     imageLightbox?.addEventListener('click', (e) => { if (e.target === imageLightbox) closeLightbox(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && imageLightbox.style.display === 'flex') closeLightbox(); });
 
-    gerarSumario(sumarioContainer, false);
+    if(sumarioContainer) gerarSumario(sumarioContainer, false);
     setupGlobalFocusManagement();
 }
 
 // ==========================================================================
 // Hooks para o conteúdo do livro
 // ==========================================================================
-
 export function setupContentHooks() {
     rendicao.hooks.content.register((contents) => {
+        currentBookContents = contents;
+
+        applyUiTheme(currentTheme);
+        applyContentTheme(contents);
+
         const style = contents.document.createElement('style');
         style.innerHTML = `p { margin-bottom: 1.5em; } img, svg { max-width: 100% !important; max-height: 95vh !important; height: auto !important; width: auto; object-fit: contain; display: block; margin: 0 auto; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
-
-        rendicao.themes.select(currentTheme);
-        applyUiTheme(currentTheme);
-        if (currentTheme === 'noturno') {
-            applySmartNightMode(contents);
-        }
 
         const images = contents.document.querySelectorAll('img, svg');
         images.forEach(img => {
