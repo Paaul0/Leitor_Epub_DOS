@@ -154,7 +154,7 @@ function fixTextColorOnLightBackgrounds(contents) {
 }
 
 // ==========================================================================
-// Funções de Acessibilidade, UI, etc. (Mantidas do seu original)
+// Funções de Acessibilidade, UI, etc.
 // ==========================================================================
 
 function anunciar(message) {
@@ -238,6 +238,9 @@ export function atualizarInfoLivro(metadata) {
 function gerarSumario(container, emModal = false) {
     const toc = livro.navigation.toc;
     const sumarioHtml = document.createElement('ul');
+    // A linha abaixo verifica se o #leitor-acessivel está visível para saber o modo
+    const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
+
     toc.forEach(item => {
         const li = document.createElement('li');
         const a = document.createElement('a');
@@ -245,9 +248,20 @@ function gerarSumario(container, emModal = false) {
         a.href = item.href;
         li.appendChild(a);
         sumarioHtml.appendChild(li);
+
         a.addEventListener("click", (e) => {
             e.preventDefault();
-            irPara(item.href);
+
+            if (isAccessibleMode) {
+                // NOVO: Chama a função do renderizador acessível
+                import('./accessibleRenderer.js').then(renderer => {
+                    renderer.displayChapter(item.href);
+                });
+            } else {
+                // Comportamento original para o modo padrão
+                irPara(item.href);
+            }
+
             if (emModal) {
                 menuModal.classList.remove('visible');
             }
@@ -316,6 +330,27 @@ export function setupIframeContentFocus() {
             anunciar("Área de leitura. Use as setas para navegar no texto.");
         }
     });
+}
+
+/**
+ * Ativa ou desativa o modo acessível na UI, escondendo controles incompatíveis.
+ * @param {boolean} isAccessible - True se o modo acessível estiver ativo.
+ */
+export function setAccessibilityMode(isAccessible) {
+    const featuresToDisable = [
+        document.getElementById('fixed-context-menu'),
+        document.getElementById('btn-search'),
+        document.querySelector('.layout-control'), // Controle de página dupla/simples
+    ];
+
+    if (isAccessible) {
+        featuresToDisable.forEach(el => el?.classList.add('feature-disabled'));
+        // Esconde o progresso em %, pois não é calculado neste modo
+        if (progressoInfo) progressoInfo.style.display = 'none';
+    } else {
+        featuresToDisable.forEach(el => el?.classList.remove('feature-disabled'));
+        if (progressoInfo) progressoInfo.style.display = 'block';
+    }
 }
 
 // ==========================================================================

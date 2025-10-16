@@ -9,6 +9,16 @@
 </head>
 
 <body>
+<div id="acessibilidade-modal" class="modal-overlay">
+    <div class="modal-content" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-desc">
+        <h2 id="modal-title">Modo de Leitura</h2>
+        <p id="modal-desc">Para uma melhor experiência com leitores de tela, recomendamos o "Modo Acessível".</p>
+        <div class="modal-actions">
+            <button id="btn-modo-acessivel" class="modal-btn primary">Usar Modo Acessível</button>
+            <button id="btn-modo-normal" class="modal-btn">Usar Modo Padrão</button>
+        </div>
+    </div>
+</div>
 <div id="fixed-context-menu" role="toolbar" aria-label="Menu de ferramentas de texto">
     <button id="btn-toggle-fixed-menu" title="Recolher menu" aria-label="Recolher ou expandir menu de ferramentas"
             aria-expanded="true">
@@ -18,19 +28,26 @@
 
     <div class="menu-tools">
         <button id="fixed-highlight-btn" title="Grifar" aria-label="Grifar texto selecionado"><img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNODAgMHYtMTYwaDgwMFYwSDgwWm01MDQtNDgwTDQ4MC01ODQgMzIwLTQyNGwxMDMgMTA0IDE2MS0xNjBabS00Ny0xNjAgMTAzIDEwMyAxNjAtMTU5LTEwNC0xMDQtMTU5IDE2MFptLTg0LTI5IDIxNiAyMTYtMTg5IDE5MHEtMjQgMjQtNTYuNSAyNFQzNjctMjYzbC0yNyAyM0gxNDBsMTI2LTEyNXEtMjQtMjQtMjUtNTcuNXQyMy01Ny41bDE4OS0xODlabTAgMCAxODctMTg3cTI0LTI0IDU2LjUtMjR0NTYuNSAyNGwxMDQgMTAzcTI0IDI0IDI0IDU2LjVUODU3LTY0MEw2NjktNDUzIDQ1My02NjlaIi8+PC9zdmc+"></button>
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNODAgMHYtMTYwaDgwMFYwSDgwWm01MDQtNDgwTDQ4MC01ODQgMzIwLTQyNGwxMDMgMTA0IDE2MS0xNjBabS00Ny0xNjAgMTAzIDEwMyAxNjAtMTU5LTEwNC0xMDQtMTU5IDE2MFptLTg0LTI5IDIxNiAyMTYtMTg5IDE5MHEtMjQgMjQtNTYuNSAyNFQzNjctMjYzbC0yNyAyM0gxNDBsMTI2LTEyNXEtMjQtMjQtMjUtNTcuNXQyMy01Ny41bDE4OS0xODlabTAgMCAxODctMTg3cTI0LTI0IDU2LjUtMjR0NTYuNSAyNGwxMDQgMTAzcTI0IDI0IDI0IDU2LjVUODU3LTY0MEw2NjktNDUzIDQ1My02NjlaIi8+PC9zdmc+">
+        </button>
         <button id="fixed-copy-btn" title="Copiar" aria-label="Copiar texto selecionado"><img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4="></button>
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTIwLTIyMHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWm0wLTE0MHYtODBoODB2ODBoLTgwWk0yNjAtODB2LTgwaDgwdjgwaC04MFptMTAwLTE2MHEtMzMgMC01Ni41LTIzLjVUMjgwLTMyMHYtNDgwcTAtMzMgMjMuNS01Ni41VDM2MC04ODBoMzYwcTMzIDAgNTYuNSAyMy41VDgwMC04MDB2NDgwcTAgMzMtMjMuNSA1Ni41VDcyMC0yNDBIMzYwWm0wLTgwaDM2MHYtNDgwSDM2MHY0ODBabTQwIDI0MHYtODBoODB2ODBoLTgwWm0tMjAwIDBxLTMzIDAtNTYuNS0yMy41VDEyMC0xNjBoODB2ODBabTM0MCAwdi04MGg4MHEwIDMzLTIzLjUgNTYuNVQ1NDAtODBaTTEyMC02NDBxMC0zMyAyMy41LTU2LjVUMjAwLTcyMHY4MGgtODBabTQyMCA4MFoiLz48L3N2Zz4=">
+        </button>
         <button id="fixed-anotar-btn" title="Anotar" aria-label="Anotar no texto selecionado"><img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjAwLTEyMHEtMzMgMC01Ni41LTIzLjVUMTIwLTIwMHYtNTYwcTAtMzMgMjMuNS01Ni41VDIwMC04NDBoNTYwcTMzIDAgNTYuNSAyMy41VDg0MC03NjB2MjY4cS0xOS05LTM5LTE1LjV0LTQxLTkuNXYtMjQzSDIwMHY1NjBoMjQycTMgMjIgOS41IDQydDE1LjUgMzhIMjAwWm0wLTEyMHY0MC01NjAgMjQzLTMgMjgwWm04MC00MGgxNjNxMy0yMSA5LjUtNDF0MTQuNS0zOUgyODB2ODBabTAtMTYwaDI0NHEzMi0zMCA3MS41LTUwdDg0LjUtMjd2LTNIMjgwdjgwWm0wLTE2MGg0MDB2LTgwSDI4MHY4MFpNNzIwLTQwcS04MyAwLTE0MS41LTU4LjVUNTIwLTI0MHEwLTgzIDU4LjUtMTQxLjVUNzIwLTQ0MHE4MyAwIDE0MS41IDU4LjVUOTIwLTI0MHEwIDgzLTU4LjUgMTQxLjVUNzIwLTQwWm0tMjAtODBoNDB2LTEwMGgxMDB2LTQwSDc0MHYtMTAwaC00MHYxMDBINjAwdjQwaDEwMHYxMDBaIi8+PC9zdmc+"></button>
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjAwLTEyMHEtMzMgMC01Ni41LTIzLjVUMTIwLTIwMHYtNTYwcTAtMzMgMjMuNS01Ni41VDIwMC04NDBoNTYwcTMzIDAgNTYuNSAyMy41VDg0MC03NjB2MjY4cS0xOS05LTM5LTE1LjV0LTQxLTkuNXYtMjQzSDIwMHY1NjBoMjQycTMgMjIgOS41IDQydDE1LjUgMzhIMjAwWm0wLTEyMHY0MC01NjAgMjQzLTMgMjgwWm04MC00MGgxNjNxMy0yMSA5LjUtNDF0MTQuNS0zOUgyODB2ODBabTAtMTYwaDI0NHEzMi0zMCA3MS41LTUwdDg0LjUtMjd2LTNIMjgwdjgwWm0wLTE2MGg0MDB2LTgwSDI4MHY4MFpNNzIwLTQwcS04MyAwLTE0MS41LTU4LjVUNTIwLTI0MHEwLTgzIDU4LjUtMTQxLjVUNzIwLTQ0MHE4MyAwIDE0MS41IDU4LjVUOTIwLTI0MHEwIDgzLTU4LjUgMTQxLjVUNzIwLTQwWm0tMjAtODBoNDB2LTEwMGgxMDB2LTQwSDc0MHYtMTAwaC00MHYxMDBINjAwdjQwaDEwMHYxMDBaIi8+PC9zdmc+">
+        </button>
         <button id="fixed-dicio-btn" title="Dicionário" aria-label="Procurar palavra no dicionário"><img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTYwLTM5MWg0NWwyMy02NmgxMDRsMjQgNjZoNDRsLTk3LTI1OGgtNDZsLTk3IDI1OFptODEtMTAzIDM4LTEwN2gybDM4IDEwN2gtNzhabTMxOS03MHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtNjAwcS0zOCAwLTczIDkuNVQ1NjAtNTY0Wm0wIDIyMHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtMzgwcS0zOCAwLTczIDl0LTY3IDI3Wm0wLTExMHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtNDkwcS0zOCAwLTczIDkuNVQ1NjAtNDU0Wk0yNjAtMzIwcTQ3IDAgOTEuNSAxMC41VDQ0MC0yNzh2LTM5NHEtNDEtMjQtODctMzZ0LTkzLTEycS0zNiAwLTcxLjUgN1QxMjAtNjkydjM5NnEzNS0xMiA2OS41LTE4dDcwLjUtNlptMjYwIDQycTQ0LTIxIDg4LjUtMzEuNVQ3MDAtMzIwcTM2IDAgNzAuNSA2dDY5LjUgMTh2LTM5NnEtMzMtMTQtNjguNS0yMXQtNzEuNS03cS00NyAwLTkzIDEydC04NyAzNnYzOTRabS00MCAxMThxLTQ4LTM4LTEwNC01OXQtMTE2LTIxcS00MiAwLTgyLjUgMTFUMTAwLTE5OHEtMjEgMTEtNDAuNS0xVDQwLTIzNHYtNDgycTAtMTEgNS41LTIxVDYyLTc1MnE0Ni0yNCA5Ni0zNnQxMDItMTJxNTggMCAxMTMuNSAxNVQ0ODAtNzQwcTUxLTMwIDEwNi41LTQ1VDcwMC04MDBxNTIgMCAxMDIgMTJ0OTYgMzZxMTEgNSAxNi41IDE1dDUuNSAyMXY0ODJxMCAyMy0xOS41IDM1dC00MC41IDFxLTM3LTIwLTc3LjUtMzFUNzAwLTI0MHEtNjAgMC0xMTYgMjF0LTEwNCA1OVpNMjgwLTQ5OVoiLz48L3N2Zz4="></button>
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMTYwLTM5MWg0NWwyMy02NmgxMDRsMjQgNjZoNDRsLTk3LTI1OGgtNDZsLTk3IDI1OFptODEtMTAzIDM4LTEwN2gybDM4IDEwN2gtNzhabTMxOS03MHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtNjAwcS0zOCAwLTczIDkuNVQ1NjAtNTY0Wm0wIDIyMHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtMzgwcS0zOCAwLTczIDl0LTY3IDI3Wm0wLTExMHYtNjhxMzMtMTQgNjcuNS0yMXQ3Mi41LTdxMjYgMCA1MSA0dDQ5IDEwdjY0cS0yNC05LTQ4LjUtMTMuNVQ3MDAtNDkwcS0zOCAwLTczIDkuNVQ1NjAtNDU0Wk0yNjAtMzIwcTQ3IDAgOTEuNSAxMC41VDQ0MC0yNzh2LTM5NHEtNDEtMjQtODctMzZ0LTkzLTEycS0zNiAwLTcxLjUgN1QxMjAtNjkydjM5NnEzNS0xMiA2OS41LTE4dDcwLjUtNlptMjYwIDQycTQ0LTIxIDg4LjUtMzEuNVQ3MDAtMzIwcTM2IDAgNzAuNSA2dDY5LjUgMTh2LTM5NnEtMzMtMTQtNjguNS0yMXQtNzEuNS03cS00NyAwLTkzIDEydC04NyAzNnYzOTRabS00MCAxMThxLTQ4LTM4LTEwNC01OXQtMTE2LTIxcS00MiAwLTgyLjUgMTFUMTAwLTE5OHEtMjEgMTEtNDAuNS0xVDQwLTIzNHYtNDgycTAtMTEgNS41LTIxVDYyLTc1MnE0Ni0yNCA5Ni0zNnQxMDItMTJxNTggMCAxMTMuNSAxNVQ0ODAtNzQwcTUxLTMwIDEwNi41LTQ1VDcwMC04MDBxNTIgMCAxMDIgMTJ0OTYgMzZxMTEgNSAxNi41IDE1dDUuNSAyMXY0ODJxMCAyMy0xOS41IDM1dC00MC41IDFxLTM3LTIwLTc3LjUtMzFUNzAwLTI0MHEtNjAgMC0xMTYgMjF0LTEwNCA1OVpNMjgwLTQ5OVoiLz48L3N2Zz4=">
+        </button>
         <button id="fixed-audio-btn" title="Ler trecho" aria-label="Ler trecho selecionado em voz alta"><img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ty41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg=="></button>
+                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMjQwLTgwcTYyIDAgMTAxLjUtMzF0NjAuNS05MXExNy01MCAzMi41LTcwdDcxLjUtNjRxNjItNTAgOTgtMTEzdDM2LTE1MXEwLTExOS04MC41LTE5OS41VDM2MC04ODBxLTExOSAwLTE5OS41IDgwLjVUODAtNjAwaDgwcTAtODUgNTcuNS0xNDIuNVQzNjAtODAwcTg1IDAgMTQyLjUgNTcuNVQ1NjAtNjAwcTAgNjgtMjcgMTE2dC03NyA4NnEtNTIgMzgtODEgNzR0LTQzIDc4cS0xNCA0NC0zMy41IDY1VDI0MC0xNjBxLTMzIDAtNTYuNS0yMy41VDE2MC0yNDBIODBxMCA2NiA0NyAxMTN0MTEzIDQ3Wm0xMjAtNDIwcTQyIDAgNzEtMjkuNXQyOS03MC41cTAtNDItMjktNzF0LTcxLTI5cS00MiAwLTcxIDI5dC0yOSA3MXEwIDQxIDI5IDcwLjV0NzEgMjkuNVptMzgwIDEyMS01OS01OXExOS0zNyAyOS03Ny41dDEwLTg0LjVxMC00NC0xMC04NHQtMjktNzdsNTktNTlxMjkgNDkgNDQuNSAxMDQuNVQ4MDAtNjAwcTAgNjEtMTUuNSAxMTYuNVQ3NDAtMzc5Wm0xMTcgMTE2LTU5LTU4cTM5LTYwIDYwLjUtMTMwVDg4MC01OThxMC03OC0yMi0xNDguNVQ3OTctODc3bDYwLTYwcTQ5IDcyIDc2IDE1Ty41VDk2MC02MDBxMCA5NC0yNyAxNzkuNVQ4NTctMjYzWiIvPjwvc3ZnPg==">
+        </button>
         <button id="fixed-increase-font-btn" title="Aumentar fonte" aria-label="Aumentar tamanho da fonte">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNjYwLTI0MHYtMjQ4bC02NCA2NC01Ni01NiAxNjAtMTYwIDE2MCAxNjAtNTYgNTYtNjQtNjR2MjQ4aC04MFptLTU0MCAwIDE2NS00NDBoNzlsMTY1IDQ0MGgtNzZsLTM5LTExM0gyMzZsLTQwIDExM2gtNzZabTEzOS0xNzdoMTMxbC02NS0xODJoLTRsLTYyIDE4MloiLz48L3N2Zz4="> </button>
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNjYwLTI0MHYtMjQ4bC02NCA2NC01Ni01NiAxNjAtMTYwIDE2MCAxNjAtNTYgNTYtNjQtNjR2MjQ4aC04MFptLTU0MCAwIDE2NS00NDBoNzlsMTY1IDQ0MGgtNzZsLTM5LTExM0gyMzZsLTQwIDExM2gtNzZabTEzOS0xNzdoMTMxbC02NS0xODJoLTRsLTYyIDE4MloiLz48L3N2Zz4=">
+        </button>
         <button id="fixed-decrease-font-btn" title="Diminuir fonte" aria-label="Diminuir tamanho da fonte">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzAwLTI0MHEtNTEgMC04MS0yNy41VDE4OS0zNDBxMC00NCAzNC41LTcyLjVUMzEyLTQ0MXEyMyAwIDQ1IDR0MzggMTF2LTEycTAtMjktMjAuNS00N1QzMjAtNTAzcS0yMyAwLTQyIDkuNVQyNDUtNDY2bC00Ny0zNXEyNC0yOSA1NC41LTQzdDY4LjUtMTRxNjkgMCAxMDMgMzIuNXQzNCA5Ny41djE3OGgtNjN2LTM3aC00cS0xNCAyMy0zOCAzNXQtNTMgMTJabTEyLTU0cTM1IDAgNTkuNS0yNHQyNC41LTU2cS0xNC04LTMzLjUtMTIuNVQzMjQtMzkxcS0zMiAwLTUwIDE0dC0xOCAzN3EwIDIwIDE2IDMzdDQwIDEzWm0zODggNTRMNTQwLTQwMGw1Ni01NiA2NCA2NHYtMjQ4aDgwdjI0OGw2NC02NCA1NiA1Ni0xNjAgMTYwWiIvPjwvc3ZnPg=="> </button>
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzAwLTI0MHEtNTEgMC04MS0yNy41VDE4OS0zNDBxMC00NCAzNC41LTcyLjVUMzEyLTQ0MXEyMyAwIDQ1IDR0MzggMTF2LTEycTAtMjktMjAuNS00N1QzMjAtNTAzcS0yMyAwLTQyIDkuNVQyNDUtNDY2bC00Ny0zNXEyNC0yOSA1NC41LTQzdDY4LjUtMTRxNjkgMCAxMDMgMzIuNXQzNCA5Ny41djE3OGgtNjN2LTM3aC00cS0xNCAyMy0zOCAzNXQtNTMgMTJabTEyLTU0cTM1IDAgNTkuNS0yNHQyNC41LTU2cS0xNC04LTMzLjUtMTIuNVQzMjQtMzkxcS0zMiAwLTUwIDE0dC0xOCAzN3EwIDIwIDE2IDMzdDQwIDEzWm0zODggNTRMNTQwLTQwMGw1Ni01NiA2NCA2NHYtMjQ4aDgwdjI0OGw2NC02NCA1NiA1Ni0xNjAgMTYwWiIvPjwvc3ZnPg==">
+        </button>
     </div>
 </div>
 <button class="btn" id="btn-show-sidebar" title="Mostrar Sumário" aria-label="Mostrar menu lateral e sumário"
@@ -52,9 +69,11 @@
             <div class="conf">
                 <button class="btn" id="btn-search" title="Pesquisar" aria-label="Pesquisar no livro"
                         aria-expanded="false" aria-controls="search-bar"><img
-                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNzg0LTEyMCA1MzItMzcycS0zMCAyNC02OSAzOHQtODMgMTRxLTEwOSAwLTE4NC41LTc1LjVUMTIwLTU4MHEwLTEwOSA3NS41LTE4NC41VDM4MC04NDBxMTA5IDAgMTg0LjUgNzUuNVQ2NDAtNTgwcTAgNDQtMTQgODN0LTM4IDY5bDI1MiAyNTItNTYgNTZaTTM4MC00MDBxNzUgMCAxMjcuNS01Mi41VDU2MC01ODBxMC03NS01Mi41LTEyNy41VDM4MC03NjBxLTc1IDAtMTI3LjUgNTIuNVQyMDAtNTgwcTAgNzUgNTIuNSAxMjcuNVQzODAtNDAwWiIvPjwvc3ZnPg=="></button>
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNzg0LTEyMCA1MzItMzcycS0zMCAyNC02OSAzOHQtODMgMTRxLTEwOSAwLTE4NC41LTc1LjVUMTIwLTU4MHEwLTEwOSA3NS41LTE4NC41VDM4MC04NDBxMTA5IDAgMTg0LjUgNzUuNVQ2NDAtNTgwcTAgNDQtMTQgODN0LTM4IDY5bDI1MiAyNTItNTYgNTZaTTM4MC00MDBxNzUgMCAxMjcuNS01Mi41VDU2MC01ODBxMC03NS01Mi41LTEyNy41VDM4MC03NjBxLTc1IDAtMTI3LjUgNTIuNVQyMDAtNTgwcTAgNzUgNTIuNSAxMjcuNVQzODAtNDAwWiIvPjwvc3ZnPg==">
+                </button>
                 <button class="btn" id="btn-menu" title="Menu" aria-label="Abrir menu de configurações de leitura"><img
-                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtMzcwLTgwLTE2LTEyOHEtMTMtNS0yNC41LTEyVDMwNy0yMzVsLTExOSA1MEw3OC0zNzVsMTAzLTc4cS0xLTctMS0xMy41di0yN3EwLTYuNSAxLTEzLjVMNzgtNTg1bDExMC0xOTAgMTE5IDUwcTExLTggMjMtMTV0MjQtMTJsMTYtMTI4aDIyMGwxNiAxMjhxMTMgNSAyNC41IDEydDIyLjUgMTVsMTE5LTUwIDExMCAxOTAtMTAzIDc4cTEgNyAxIDEzLjV2MjdxMCA2LjUtMiAxMy41bDEwMyA3OC0xMTAgMTkwLTExOC01MHEtMTEgOC0yMyAxNXQtMjQgMTJMNTkwLTgwSDM3MFptNzAtODBoNzlsMTQtMTA2cTMxLTggNTcuNS0yMy41VDYzOS0zMjdsOTkgNDEgMzktNjgtODYtNjVxNS0xNCA3LTI5LjV0Mi0zMS41cTAtMTYtMi0zMS41dC03LTI5LjVsODYtNjUtMzktNjgtOTkgNDJxLTIyLTIzLTQ4LjUtMzguNVQ1MzMtNjk4bC0xMy0xMDZoLTc5bC0xNCAxMDZxLTMxIDgtNTcuNSAyMy41VDMyMS02MzNsLTk5LTQxLTM5IDY4IDg2IDY0cS01IDE1LTcgMzB0LTIgMzJxMCAxNiAyIDMxdDcgMzBsLTg2IDY1IDM5IDY4IDk5LTQycTIyIDIzIDQ4LjUgMzguNVQ0MjctMjY2bDEzIDEwNlptNDItMTgwcTU4IDAgOTktNDF0NDEtOTlxMC01OC00MS05OXQtOTktNDFxLTU5IDAtOTkuNSA0MVQzNDItNDgwcTAgNTggNDAuNSA5OXQ5OS41IDQxWm0tMi0xNDBaIi8+PC9zdmc+"></button>
+                        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJtMzcwLTgwLTE2LTEyOHEtMTMtNS0yNC41LTEyVDMwNy0yMzVsLTExOSA1MEw3OC0zNzVsMTAzLTc4cS0xLTctMS0xMy41di0yN3EwLTYuNSAxLTEzLjVMNzgtNTg1bDExMC0xOTAgMTE5IDUwcTExLTggMjMtMTV0MjQtMTJsMTYtMTI4aDIyMGwxNiAxMjhxMTMgNSAyNC41IDEydDIyLjUgMTVsMTE5LTUwIDExMCAxOTAtMTAzIDc4cTEgNyAxIDEzLjV2MjdxMCA2LjUtMiAxMy41bDEwMyA3OC0xMTAgMTkwLTExOC01MHEtMTEgOC0yMyAxNXQtMjQgMTJMNTkwLTgwSDM3MFptNzAtODBoNzlsMTQtMTA2cTMxLTggNTcuNS0yMy41VDYzOS0zMjdsOTkgNDEgMzktNjgtODYtNjVxNS0xNCA3LTI5LjV0Mi0zMS41cTAtMTYtMi0zMS41dC03LTI5LjVsODYtNjUtMzktNjgtOTkgNDJxLTIyLTIzLTQ4LjUtMzguNVQ1MzMtNjk4bC0xMy0xMDZoLTc5bC0xNCAxMDZxLTMxIDgtNTcuNSAyMy41VDMyMS02MzNsLTk5LTQxLTM5IDY4IDg2IDY0cS01IDE1LTcgMzB0LTIgMzJxMCAxNiAyIDMxdDcgMzBsLTg2IDY1IDM5IDY4IDk5LTQycTIyIDIzIDQ4LjUgMzguNVQ0MjctMjY2bDEzIDEwNlptNDItMTgwcTU4IDAgOTktNDF0NDEtOTlxMC01OC00MS05OXQtOTktNDFxLTU5IDAtOTkuNSA0MVQzNDItNDgwcTAgNTggNDAuNSA5OXQ5OS41IDQxWm0tMi0xNDBaIi8+PC9zdmc+">
+                </button>
             </div>
         </div>
         <div id="search-bar" role="search">
@@ -67,9 +86,11 @@
                 <span id="search-results-info" aria-live="polite"></span>
                 <div class="search-buttons">
                     <button id="search-prev-btn" title="Resultado anterior" aria-label="Ir para resultado anterior"
-                            disabled>&lt;</button>
+                            disabled>&lt;
+                    </button>
                     <button id="search-next-btn" title="Próximo resultado" aria-label="Ir para próximo resultado"
-                            disabled>&gt;</button>
+                            disabled>&gt;
+                    </button>
                 </div>
             </div>
         </div>
@@ -95,6 +116,8 @@
 </aside>
 <main class="leitor" role="main">
     <div id="leitor"></div>
+
+    <div id="leitor-acessivel" role="article"></div>
 </main>
 <footer class="progresso">
     <div class="navegacao" role="navigation" aria-label="Navegação de páginas">
@@ -116,11 +139,14 @@
         </header>
         <div class="menu-tabs" role="tablist" aria-label="Abas de configurações">
             <button class="menu-tab-btn active" data-target="panel-sumario" role="tab" aria-selected="true"
-                    aria-controls="panel-sumario">Sumário</button>
+                    aria-controls="panel-sumario">Sumário
+            </button>
             <button class="menu-tab-btn" data-target="panel-exibicao" role="tab" aria-selected="false"
-                    aria-controls="panel-exibicao">Exibição</button>
+                    aria-controls="panel-exibicao">Exibição
+            </button>
             <button class="menu-tab-btn" data-target="panel-notas" role="tab" aria-selected="false"
-                    aria-controls="panel-notas">Notas</button>
+                    aria-controls="panel-notas">Notas
+            </button>
         </div>
         <div class="menu-panels">
             <div class="menu-panel active" id="panel-sumario" role="tabpanel" aria-labelledby="tab-sumario"></div>
@@ -164,13 +190,16 @@
                         <legend>Tema de Cores</legend>
                         <div class="theme-control">
                             <label class="theme-option"><input type="radio" name="theme" value="claro" checked>
-                                <div class="theme-preview light"></div>Claro
+                                <div class="theme-preview light"></div>
+                                Claro
                             </label>
                             <label class="theme-option"><input type="radio" name="theme" value="sepia">
-                                <div class="theme-preview sepia"></div>Sépia
+                                <div class="theme-preview sepia"></div>
+                                Sépia
                             </label>
                             <label class="theme-option"><input type="radio" name="theme" value="noturno">
-                                <div class="theme-preview night"></div>Noturno
+                                <div class="theme-preview night"></div>
+                                Noturno
                             </label>
                         </div>
                     </fieldset>

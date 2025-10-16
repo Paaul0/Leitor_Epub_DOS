@@ -841,3 +841,107 @@ input[type="range"] {
     outline: 3px solid #007AFF; /* Um contorno azul e grosso, impossível de ignorar */
     outline-offset: -3px;      /* Coloca o contorno para dentro, para não causar "pulos" no layout */
 }
+
+/* ==========================================================================
+   NOVO: Estilos do Modal de Acessibilidade
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 4000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content p {
+    color: #555;
+    line-height: 1.6;
+}
+
+.modal-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-btn {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.modal-btn.primary {
+    background-color: #007AFF;
+    color: white;
+}
+.modal-btn.primary:hover {
+    background-color: #0056b3;
+}
+
+.modal-btn:not(.primary) {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+}
+.modal-btn:not(.primary):hover {
+    background-color: #e0e0e0;
+}
+
+/* ==========================================================================
+   NOVO: Estilos para o Leitor Acessível e para desabilitar features
+   ========================================================================== */
+#leitor-acessivel {
+    height: 100%;
+    overflow-y: auto;
+    padding: 2% 5%;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+    background-color: #fff;
+    color: #000;
+}
+
+#leitor-acessivel img,
+#leitor-acessivel svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em auto;
+}
+
+/* Classe para esconder funcionalidades indisponíveis no modo acessível */
+.feature-disabled {
+    display: none !important;
+}

@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
         "Epubs/moby-dick.epub",
         "Epubs/pg1342.epub",
         "Epubs/teste.epub",
+        "Epubs/diario_final.epub",
+
     ];
 
     const estante = document.getElementById('estanteDeLivros');
