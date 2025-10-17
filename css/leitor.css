@@ -924,24 +924,64 @@ input[type="range"] {
    ========================================================================== */
 #leitor-acessivel {
     height: 100%;
+    box-sizing: border-box;
+
+    /* 1. Habilita a rolagem VERTICAL e desabilita a HORIZONTAL */
     overflow-y: auto;
+    overflow-x: hidden;
+
+    /* 2. Garante que a barra de rolagem fique invisível (opcional) */
+    scrollbar-width: none; /* Para Firefox */
+    -ms-overflow-style: none; /* Para IE */
     padding: 2% 5%;
-    max-width: 800px;
-    margin: 0 auto;
-    line-height: 1.7;
-    background-color: #fff;
-    color: #000;
+    transition: opacity 0.15s ease-in-out;
 }
 
-#leitor-acessivel img,
-#leitor-acessivel svg {
-    max-width: 100%;
+#leitor-acessivel.transitioning {
+    opacity: 0;
+}
+
+#leitor-acessivel::-webkit-scrollbar {
+    display: none; /* Para Chrome, Safari, etc. */
+}
+
+#leitor-acessivel img {
+    max-height: 90%;
     height: auto;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
     display: block;
-    margin: 1em auto;
+    margin: 0 auto;
 }
 
 /* Classe para esconder funcionalidades indisponíveis no modo acessível */
 .feature-disabled {
     display: none !important;
+}
+
+/* ==========================================================================
+   NOVAS CORREÇÕES ESPECÍFICAS PARA O MODO ACESSÍVEL
+   ========================================================================== */
+
+.navegacao button img {
+    height: auto;
+}
+
+
+body.modo-acessivel {
+    margin: 0 !important;
+}
+
+#btn-show-sidebar img {
+    height: auto;
+}
+
+.infos button img{
+    height: auto;
+}
+
+.info_liv, #sumario-container {
+    text-align: left;
+    line-height: 1.2;
 }

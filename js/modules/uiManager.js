@@ -6,6 +6,7 @@
 
 import { livro, rendicao, irPara } from './epubService.js';
 import { savedAnnotations, reaplicarAnotacoes } from './annotations.js';
+import { getCurrentChapterHref } from './accessibleRenderer.js';
 
 // ==========================================================================
 // Seleção de Elementos (DOM)
@@ -167,11 +168,18 @@ function anunciar(message) {
 function setupGlobalFocusManagement() {
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab') return;
+
         const modal = document.getElementById('menu-modal');
         const isModalVisible = modal.classList.contains('visible');
-        const searchContext = isModalVisible ? modal : document.body;
+
+        if (!isModalVisible) {
+            return;
+        }
+
+        const searchContext = modal;
         const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
         const focusableElements = Array.from(searchContext.querySelectorAll(query));
+
         const visibleFocusableElements = focusableElements.filter(el => {
             const style = getComputedStyle(el);
             if (el.tagName === 'IFRAME') {
@@ -180,18 +188,22 @@ function setupGlobalFocusManagement() {
             const rect = el.getBoundingClientRect();
             return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
         });
+
         if (visibleFocusableElements.length === 0) {
             event.preventDefault();
             return;
         }
+
         const currentIndex = visibleFocusableElements.indexOf(document.activeElement);
         const isTabbingBackward = event.shiftKey;
         let nextIndex = 0;
+
         if (isTabbingBackward) {
             nextIndex = (currentIndex > 0) ? currentIndex - 1 : visibleFocusableElements.length - 1;
         } else {
             nextIndex = (currentIndex < visibleFocusableElements.length - 1) ? currentIndex + 1 : 0;
         }
+
         event.preventDefault();
         visibleFocusableElements[nextIndex].focus();
     });
@@ -238,8 +250,6 @@ export function atualizarInfoLivro(metadata) {
 function gerarSumario(container, emModal = false) {
     const toc = livro.navigation.toc;
     const sumarioHtml = document.createElement('ul');
-    // A linha abaixo verifica se o #leitor-acessivel está visível para saber o modo
-    const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
 
     toc.forEach(item => {
         const li = document.createElement('li');
@@ -252,18 +262,26 @@ function gerarSumario(container, emModal = false) {
         a.addEventListener("click", (e) => {
             e.preventDefault();
 
+            // Verifica se estamos no modo acessível
+            const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
+
             if (isAccessibleMode) {
-                // NOVO: Chama a função do renderizador acessível
+                // Se sim, chama a função do novo renderizador
                 import('./accessibleRenderer.js').then(renderer => {
                     renderer.displayChapter(item.href);
                 });
             } else {
-                // Comportamento original para o modo padrão
+                // Se não, usa o comportamento original
                 irPara(item.href);
             }
 
             if (emModal) {
                 menuModal.classList.remove('visible');
+            }
+
+            // Esconde a sidebar após o clique (útil em telas menores)
+            if (!emModal && window.innerWidth < 768) {
+                document.body.classList.add('sidebar-collapsed');
             }
         });
     });
@@ -358,8 +376,8 @@ export function setAccessibilityMode(isAccessible) {
 // ==========================================================================
 
 export function initUIManager() {
-    document.getElementById("anterior")?.addEventListener("click", () => rendicao.prev());
-    document.getElementById("proximo")?.addEventListener("click", () => rendicao.next());
+   // document.getElementById("anterior")?.addEventListener("click", () => rendicao.prev());
+    //document.getElementById("proximo")?.addEventListener("click", () => rendicao.next());
 
     btnToggleSidebar?.addEventListener('click', () => {
         body.classList.add('sidebar-collapsed');
@@ -371,9 +389,21 @@ export function initUIManager() {
     });
 
     btnMenu?.addEventListener('click', () => {
-        const currentLocation = rendicao.currentLocation();
-        const chapter = currentLocation ? livro.navigation.get(currentLocation.start.href) : null;
+        const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
+        let chapterHref;
+
+        if (isAccessibleMode) {
+            chapterHref = getCurrentChapterHref(); // Pega o href do nosso novo módulo
+        } else {
+            const currentLocation = rendicao.currentLocation(); // Comportamento antigo
+            if (currentLocation) {
+                chapterHref = currentLocation.start.href;
+            }
+        }
+
+        const chapter = chapterHref ? livro.navigation.get(chapterHref) : null;
         if(menuChapterTitle) menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
+
         if(panelSumarioModal) gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
 
