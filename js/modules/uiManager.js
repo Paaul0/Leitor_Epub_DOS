@@ -1,7 +1,7 @@
 /**
  * uiManager.js
  * Módulo para controlar todos os elementos e eventos da interface do usuário (DOM).
- * ***** VERSÃO FINAL, COMPLETA E CORRIGIDA *****
+ * ***** VERSÃO COMPLETA E CORRIGIDA *****
  */
 
 import { livro, rendicao, irPara } from './epubService.js';
@@ -39,12 +39,10 @@ const lightboxImg = document.getElementById('lightbox-img');
 const closeLightboxBtn = document.querySelector('.close-lightbox');
 const mainPageElements = document.querySelectorAll('header, aside, main, footer, #fixed-context-menu, #btn-show-sidebar');
 
-
 // ==========================================================================
 // Estado e Configurações da UI
 // ==========================================================================
 let currentTheme = 'claro';
-let currentBookContents = null;
 let currentFontSize = 100;
 
 const UI_THEMES = {
@@ -54,10 +52,9 @@ const UI_THEMES = {
 };
 
 // ==========================================================================
-// LÓGICA DE TEMAS CORRIGIDA
+// Lógica de Temas e UI
 // ==========================================================================
 
-// Função para aplicar tema na INTERFACE (sidebar, header, etc.)
 function applyUiTheme(themeName) {
     const theme = UI_THEMES[themeName];
     if (!theme) return;
@@ -78,7 +75,6 @@ function applyUiTheme(themeName) {
     if (progressoInfo) progressoInfo.style.color = theme.text;
 }
 
-// Função para aplicar tema DENTRO DO LIVRO (iframe) - Lógica do seu leitorc.js
 function applyContentTheme(contents) {
     if (!contents) return;
     const oldStyle = contents.document.getElementById('theme-style');
@@ -88,70 +84,16 @@ function applyContentTheme(contents) {
     style.id = 'theme-style';
     let css = '';
 
-    // Esta parte volta a ser como era antes, sem o seletor universal "*"
     if (currentTheme === 'sepia') {
-        css = `body { background-color: #fbf0d9 !important; color: #5b4636 !important; }
-               p, a, h1, h2, h3, h4, h5, h6, span { color: #5b4636 !important; }
-               a { color: #8a3c00 !important; }`;
+        css = `body { background-color: #fbf0d9 !important; color: #5b4636 !important; } p, a, h1, h2, h3, h4, h5, h6, span { color: #5b4636 !important; } a { color: #8a3c00 !important; }`;
     } else if (currentTheme === 'noturno') {
-        css = `body { background-color: #383B43 !important; color: #E0E0E0 !important; }
-               p, a, h1, h2, h3, h4, h5, h6, span { color: #E0E0E0 !important; }
-               a { color: #8ab4f8 !important; }`;
+        css = `body { background-color: #383B43 !important; color: #E0E0E0 !important; } p, a, h1, h2, h3, h4, h5, h6, span { color: #E0E0E0 !important; } a { color: #8ab4f8 !important; }`;
     }
 
     if (css) {
         style.innerHTML = css;
         contents.document.head.appendChild(style);
     }
-
-    // IMPORTANTE: Chama a nossa nova função para corrigir o texto nos fundos claros
-    if (currentTheme === 'noturno' || currentTheme === 'sepia') {
-        fixTextColorOnLightBackgrounds(contents);
-    }
-}
-
-// No arquivo: uiManager.js
-
-// SUBSTITUA a sua função 'fixTextColorOnLightBackgrounds' por esta:
-function fixTextColorOnLightBackgrounds(contents) {
-    // Função interna para checar se uma cor é "clara"
-    const isColorLight = (colorStr) => {
-        if (!colorStr || colorStr === 'transparent') return false;
-
-        // Lida com cores no formato RGBA. Se for transparente, não é clara.
-        if (colorStr.startsWith('rgba')) {
-            // Extrai o valor alfa (transparência)
-            const alpha = parseFloat(colorStr.split(',')[3]);
-            if (alpha < 0.5) { // Considera transparente se a opacidade for baixa
-                return false;
-            }
-        }
-
-        try {
-            const [r, g, b] = colorStr.match(/\d+/g).map(Number);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-            return luminance > 180; // Limite para considerar a cor como "clara"
-        } catch (e) {
-            // Fallback para nomes de cores comuns
-            return ['white', 'ivory', 'lightyellow', 'honeydew', 'seashell', 'whitesmoke', 'snow'].includes(colorStr.toLowerCase());
-        }
-    };
-
-    // Pega todos os elementos possíveis dentro do livro
-    const elementsToCheck = contents.document.body.querySelectorAll('p, span, div, li, a, h1, h2, h3, h4, h5, h6, td, th, pre, blockquote');
-
-    elementsToCheck.forEach(el => {
-        const style = contents.window.getComputedStyle(el);
-
-        if (isColorLight(style.backgroundColor)) {
-            el.style.setProperty('color', '#000000', 'important');
-
-            const children = el.querySelectorAll('*');
-            children.forEach(child => {
-                child.style.setProperty('color', '#000000', 'important');
-            });
-        }
-    });
 }
 
 // ==========================================================================
@@ -165,28 +107,40 @@ function anunciar(message) {
     }
 }
 
-function setupGlobalFocusManagement() {
+export function setupGlobalFocusManagement() {
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab') return;
 
-        const modal = document.getElementById('menu-modal');
-        const isModalVisible = modal.classList.contains('visible');
+        // ==========================================================================
+        //      LÓGICA CORRIGIDA: AGORA FUNCIONA PARA QUALQUER MODAL
+        // ==========================================================================
 
-        if (!isModalVisible) {
-            return;
+        // 1. Procura por QUALQUER modal que esteja ativo na tela.
+        const accessibilityModal = document.getElementById('acessibilidade-modal');
+        const settingsModal = document.getElementById('menu-modal');
+        let activeModal = null;
+
+        if (accessibilityModal && accessibilityModal.classList.contains('visible')) {
+            activeModal = accessibilityModal;
+        } else if (settingsModal && settingsModal.classList.contains('visible')) {
+            activeModal = settingsModal;
         }
 
-        const searchContext = modal;
-        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), details, iframe, [tabindex]:not([tabindex="-1"])';
+        // 2. Se nenhum modal estiver ativo, o script não faz nada e deixa o Tab funcionar normalmente.
+        if (!activeModal) {
+            return;
+        }
+        // ==========================================================================
+
+        // 3. A partir daqui, o resto do código funciona da mesma forma, mas usando o "activeModal" que encontramos.
+        const searchContext = activeModal;
+        const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
         const focusableElements = Array.from(searchContext.querySelectorAll(query));
 
+        // Filtra para garantir que apenas elementos realmente visíveis sejam focados
         const visibleFocusableElements = focusableElements.filter(el => {
-            const style = getComputedStyle(el);
-            if (el.tagName === 'IFRAME') {
-                return style.visibility !== 'hidden' && style.display !== 'none';
-            }
             const rect = el.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+            return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
         });
 
         if (visibleFocusableElements.length === 0) {
@@ -261,25 +215,17 @@ function gerarSumario(container, emModal = false) {
 
         a.addEventListener("click", (e) => {
             e.preventDefault();
-
-            // Verifica se estamos no modo acessível
             const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
-
             if (isAccessibleMode) {
-                // Se sim, chama a função do novo renderizador
                 import('./accessibleRenderer.js').then(renderer => {
                     renderer.displayChapter(item.href);
                 });
             } else {
-                // Se não, usa o comportamento original
                 irPara(item.href);
             }
-
             if (emModal) {
                 menuModal.classList.remove('visible');
             }
-
-            // Esconde a sidebar após o clique (útil em telas menores)
             if (!emModal && window.innerWidth < 768) {
                 document.body.classList.add('sidebar-collapsed');
             }
@@ -350,20 +296,14 @@ export function setupIframeContentFocus() {
     });
 }
 
-/**
- * Ativa ou desativa o modo acessível na UI, escondendo controles incompatíveis.
- * @param {boolean} isAccessible - True se o modo acessível estiver ativo.
- */
 export function setAccessibilityMode(isAccessible) {
     const featuresToDisable = [
         document.getElementById('fixed-context-menu'),
-        document.getElementById('btn-search'),
-        document.querySelector('.layout-control'), // Controle de página dupla/simples
+        document.querySelector('.layout-control'),
     ];
 
     if (isAccessible) {
         featuresToDisable.forEach(el => el?.classList.add('feature-disabled'));
-        // Esconde o progresso em %, pois não é calculado neste modo
         if (progressoInfo) progressoInfo.style.display = 'none';
     } else {
         featuresToDisable.forEach(el => el?.classList.remove('feature-disabled'));
@@ -376,9 +316,6 @@ export function setAccessibilityMode(isAccessible) {
 // ==========================================================================
 
 export function initUIManager() {
-   // document.getElementById("anterior")?.addEventListener("click", () => rendicao.prev());
-    //document.getElementById("proximo")?.addEventListener("click", () => rendicao.next());
-
     btnToggleSidebar?.addEventListener('click', () => {
         body.classList.add('sidebar-collapsed');
         setTimeout(() => rendicao?.resize(), 400);
@@ -391,22 +328,18 @@ export function initUIManager() {
     btnMenu?.addEventListener('click', () => {
         const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
         let chapterHref;
-
         if (isAccessibleMode) {
-            chapterHref = getCurrentChapterHref(); // Pega o href do nosso novo módulo
+            chapterHref = getCurrentChapterHref();
         } else {
-            const currentLocation = rendicao.currentLocation(); // Comportamento antigo
+            const currentLocation = rendicao.currentLocation();
             if (currentLocation) {
                 chapterHref = currentLocation.start.href;
             }
         }
-
         const chapter = chapterHref ? livro.navigation.get(chapterHref) : null;
         if(menuChapterTitle) menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
-
         if(panelSumarioModal) gerarSumario(panelSumarioModal, true);
         renderNotesPanel();
-
         mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
         btnMenu.setAttribute('aria-expanded', 'true');
         menuModal.classList.add('visible');
@@ -460,25 +393,13 @@ export function initUIManager() {
     fixedDecreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(false));
     fixedIncreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(true));
 
-    const handleKeydownOnFontButtons = (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            event.currentTarget.click();
-        }
-    };
-    decreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
-    increaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
-    fixedDecreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
-    fixedIncreaseFontBtn?.addEventListener('keydown', handleKeydownOnFontButtons);
-
     fontSizeSlider?.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
     fontSelect?.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
 
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyUiTheme(currentTheme);
-        applyContentTheme(currentBookContents);
-        anunciar(`Tema alterado para ${currentTheme}`);
+        rendicao.getContents().forEach(c => applyContentTheme(c));
     }));
 
     layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
@@ -496,8 +417,6 @@ export function initUIManager() {
 // ==========================================================================
 export function setupContentHooks() {
     rendicao.hooks.content.register((contents) => {
-        currentBookContents = contents;
-
         applyUiTheme(currentTheme);
         applyContentTheme(contents);
 
@@ -505,17 +424,47 @@ export function setupContentHooks() {
         style.innerHTML = `p { margin-bottom: 1.5em; } img, svg { max-width: 100% !important; max-height: 95vh !important; height: auto !important; width: auto; object-fit: contain; display: block; margin: 0 auto; } ::selection { background-color: #D3D3D3; }`;
         contents.document.head.appendChild(style);
 
-        const images = contents.document.querySelectorAll('img, svg');
-        images.forEach(img => {
-            img.style.cursor = 'pointer';
-            img.addEventListener('click', () => {
-                openLightbox(img);
-            });
-        });
-
         contents.window.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft') rendicao.prev();
             if (event.key === 'ArrowRight') rendicao.next();
+        });
+    });
+}
+
+/**
+ * CORREÇÃO: Esta função espera o capítulo ser 100% renderizado para então
+ * adicionar os listeners nas imagens.
+ */
+export function setupRenderedHooks() {
+    rendicao.on("rendered", async (section, view) => {
+        const contents = view.contents;
+        if (!contents || !contents.document) return;
+
+        // 1. LÓGICA DE CORREÇÃO FORÇADA
+        const images = contents.document.querySelectorAll('img');
+        for (const img of images) {
+            // Se o src NÃO for um blob, nós mesmos o consertamos.
+            if (img.getAttribute('src') && !img.src.startsWith('blob:')) {
+                const requestedSrc = img.getAttribute('src');
+                // Tenta encontrar o recurso no livro
+                const resource = livro.resources.get(requestedSrc);
+                if (resource) {
+                    const url = await resource.url();
+                    img.src = url;
+                }
+            }
+        }
+
+        // 2. AGORA, com a garantia de que as imagens estão corretas, configuramos o lightbox.
+        const allImages = contents.document.querySelectorAll('img, svg');
+        allImages.forEach(img => {
+            img.style.cursor = 'pointer';
+            if (!img.dataset.lightboxAttached) {
+                img.dataset.lightboxAttached = "true";
+                img.addEventListener('click', () => {
+                    openLightbox(img);
+                });
+            }
         });
     });
 }

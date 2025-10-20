@@ -985,3 +985,9 @@ body.modo-acessivel {
     text-align: left;
     line-height: 1.2;
 }
+
+.search-highlight-accessible {
+    background-color: #ffda00;
+    color: #000000;
+    font-weight: bold;
+}
