@@ -38,12 +38,14 @@ const imageLightbox = document.getElementById('image-lightbox');
 const lightboxImg = document.getElementById('lightbox-img');
 const closeLightboxBtn = document.querySelector('.close-lightbox');
 const mainPageElements = document.querySelectorAll('header, aside, main, footer, #fixed-context-menu, #btn-show-sidebar');
+const fixedContrastBtn = document.getElementById('fixed-contrast-btn');
 
 // ==========================================================================
 // Estado e Configurações da UI
 // ==========================================================================
 let currentTheme = 'claro';
 let currentFontSize = 100;
+let isHighContrastActive = false;
 
 const UI_THEMES = {
     claro: { bg: '#FFFFFF', text: '#000000', border: '#ddd' },
@@ -100,48 +102,49 @@ function applyContentTheme(contents) {
 // Funções de Acessibilidade, UI, etc.
 // ==========================================================================
 
-function anunciar(message) {
+export function anunciar(message) {
     const announcer = document.getElementById('a11y-announcer');
     if (announcer) {
         announcer.textContent = message;
     }
 }
 
+// Em js/uiManager.js
 export function setupGlobalFocusManagement() {
     document.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab') return;
 
-        // ==========================================================================
-        //      LÓGICA CORRIGIDA: AGORA FUNCIONA PARA QUALQUER MODAL
-        // ==========================================================================
-
-        // 1. Procura por QUALQUER modal que esteja ativo na tela.
         const accessibilityModal = document.getElementById('acessibilidade-modal');
         const settingsModal = document.getElementById('menu-modal');
         let activeModal = null;
-
         if (accessibilityModal && accessibilityModal.classList.contains('visible')) {
             activeModal = accessibilityModal;
         } else if (settingsModal && settingsModal.classList.contains('visible')) {
             activeModal = settingsModal;
         }
 
-        // 2. Se nenhum modal estiver ativo, o script não faz nada e deixa o Tab funcionar normalmente.
-        if (!activeModal) {
-            return;
-        }
-        // ==========================================================================
+        if (!activeModal) return;
 
-        // 3. A partir daqui, o resto do código funciona da mesma forma, mas usando o "activeModal" que encontramos.
         const searchContext = activeModal;
         const query = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
         const focusableElements = Array.from(searchContext.querySelectorAll(query));
 
-        // Filtra para garantir que apenas elementos realmente visíveis sejam focados
+        // ==========================================================================
+        //      CÓDIGO DE DIAGNÓSTICO
+        // ==========================================================================
+        console.log("--- DEBUG DE FOCO (Apertou Tab) ---");
         const visibleFocusableElements = focusableElements.filter(el => {
+            const style = getComputedStyle(el);
             const rect = el.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
+            const isVisible = style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+
+            // Imprime o status de cada elemento no console
+            console.log(`Elemento:`, el, `| Visível? ${isVisible}`, `| Dimensões: ${rect.width}x${rect.height}`);
+
+            return isVisible;
         });
+        console.log("--- FIM DO DEBUG ---");
+        // ==========================================================================
 
         if (visibleFocusableElements.length === 0) {
             event.preventDefault();
@@ -167,14 +170,14 @@ function openLightbox(imageElement) {
     mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
     lightboxImg.src = imageElement.src;
     imageLightbox.style.display = 'flex';
-    setTimeout(() => {
-        closeLightboxBtn.focus();
-    }, 100);
+    anunciar("Imagem ampliada. Pressione Escape para fechar."); // Linha nova
+    setTimeout(() => closeLightboxBtn.focus(), 100);
 }
 
 function closeLightbox() {
     mainPageElements.forEach(el => el.removeAttribute('aria-hidden'));
     imageLightbox.style.display = 'none';
+    anunciar("Fechando imagem."); // Linha nova
     const bookIframe = document.querySelector('#leitor iframe');
     if (bookIframe) {
         bookIframe.focus();
@@ -187,9 +190,11 @@ export function atualizarTitulo(titulo) {
 }
 
 export function atualizarProgresso(location) {
-    if (livro && location && location.start && livro.locations && livro.locations.length() > 0) {
+    if (livro && location?.start && livro.locations?.length() > 0) {
         const percentage = Math.floor(livro.locations.percentageFromCfi(location.start.cfi) * 100);
-        if(progressoInfo) progressoInfo.textContent = `Progresso: ${percentage}%`;
+        const progressText = `Progresso: ${percentage}%`;
+        if(progressoInfo) progressoInfo.textContent = progressText;
+        anunciar(progressText); // Linha nova
     }
 }
 
@@ -298,7 +303,6 @@ export function setupIframeContentFocus() {
 
 export function setAccessibilityMode(isAccessible) {
     const featuresToDisable = [
-        document.getElementById('fixed-context-menu'),
         document.querySelector('.layout-control'),
     ];
 
@@ -316,15 +320,33 @@ export function setAccessibilityMode(isAccessible) {
 // ==========================================================================
 
 export function initUIManager() {
+
+    fixedContrastBtn?.addEventListener('click', () => {
+        isHighContrastActive = !isHighContrastActive; // Inverte o estado
+        document.body.classList.toggle('high-contrast-mode', isHighContrastActive); // Adiciona/remove a classe CSS
+
+        anunciar(`Modo de alto contraste ${isHighContrastActive ? 'ativado' : 'desativado'}.`);
+
+        if (!document.body.classList.contains('modo-acessivel')) {
+            console.log("Alto contraste alterado no modo padrão. Verifique se o conteúdo do iframe foi atualizado.");
+            setTimeout(() => rendicao?.resize(), 50);
+        }
+    });
+
     btnToggleSidebar?.addEventListener('click', () => {
         body.classList.add('sidebar-collapsed');
+        btnToggleSidebar.setAttribute('aria-expanded', 'false');
+        btnShowSidebar.setAttribute('aria-expanded', 'false');
         setTimeout(() => rendicao?.resize(), 400);
     });
     btnShowSidebar?.addEventListener('click', () => {
         body.classList.remove('sidebar-collapsed');
+        btnToggleSidebar.setAttribute('aria-expanded', 'true');
+        btnShowSidebar.setAttribute('aria-expanded', 'true');
         setTimeout(() => rendicao?.resize(), 400);
     });
 
+    // === Lógica do Menu Modal ===
     btnMenu?.addEventListener('click', () => {
         const isAccessibleMode = document.getElementById('leitor-acessivel').style.display === 'block';
         let chapterHref;
@@ -339,7 +361,7 @@ export function initUIManager() {
         const chapter = chapterHref ? livro.navigation.get(chapterHref) : null;
         if(menuChapterTitle) menuChapterTitle.textContent = chapter ? chapter.label.trim() : 'Início';
         if(panelSumarioModal) gerarSumario(panelSumarioModal, true);
-        renderNotesPanel();
+        renderNotesPanel(); // Certifique-se que esta função existe no seu arquivo
         mainPageElements.forEach(el => el.setAttribute('aria-hidden', 'true'));
         btnMenu.setAttribute('aria-expanded', 'true');
         menuModal.classList.add('visible');
@@ -359,6 +381,7 @@ export function initUIManager() {
     menuModal?.addEventListener('click', (e) => { if (e.target === menuModal) closeMenuModal(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && menuModal.classList.contains('visible')) closeMenuModal(); });
 
+    // === Lógica das Abas do Menu Modal ===
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             tabButtons.forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
@@ -372,44 +395,101 @@ export function initUIManager() {
         });
     });
 
+    // ==========================================================================
+    //      NOVO BLOCO UNIFICADO DE CONTROLE DE FONTE
+    // ==========================================================================
+    let currentAccessibleFontSize = 1; // Usaremos 'em' para o modo acessível
+
+    // Função unificada para atualizar o tamanho da fonte
     const updateFontSize = () => {
-        if(fontSizeSlider) fontSizeSlider.value = currentFontSize;
-        rendicao.themes.fontSize(`${currentFontSize}%`);
-        setTimeout(reaplicarAnotacoes, 100);
-        anunciar(`Tamanho da fonte ${currentFontSize}%`);
+        const isAccessibleMode = document.body.classList.contains('modo-acessivel');
+
+        if (isAccessibleMode) {
+            const accessibleContainer = document.getElementById('leitor-acessivel');
+            if (accessibleContainer) {
+                accessibleContainer.style.fontSize = `${currentAccessibleFontSize}em`;
+            }
+            anunciar(`Tamanho da fonte ${Math.round(currentAccessibleFontSize * 100)}%`);
+        } else {
+            if(fontSizeSlider) fontSizeSlider.value = currentFontSize;
+            rendicao.themes.fontSize(`${currentFontSize}%`);
+            setTimeout(reaplicarAnotacoes, 100);
+            anunciar(`Tamanho da fonte ${currentFontSize}%`);
+        }
     };
 
+    // Função unificada para lidar com cliques nos botões de aumentar/diminuir
     const handleFontButtonClick = (isIncreasing) => {
-        if (isIncreasing) {
-            if (currentFontSize < 200) currentFontSize += 10;
+        const isAccessibleMode = document.body.classList.contains('modo-acessivel');
+
+        if (isAccessibleMode) {
+            const step = 0.1;
+            if (isIncreasing) {
+                currentAccessibleFontSize = Math.min(2.5, currentAccessibleFontSize + step);
+            } else {
+                currentAccessibleFontSize = Math.max(0.7, currentAccessibleFontSize - step);
+            }
         } else {
-            if (currentFontSize > 80) currentFontSize -= 10;
+            if (isIncreasing) {
+                if (currentFontSize < 200) currentFontSize += 10;
+            } else {
+                if (currentFontSize > 80) currentFontSize -= 10;
+            }
         }
         updateFontSize();
     };
 
+    // Listeners dos botões
     decreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(false));
     increaseFontBtn?.addEventListener('click', () => handleFontButtonClick(true));
     fixedDecreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(false));
     fixedIncreaseFontBtn?.addEventListener('click', () => handleFontButtonClick(true));
 
-    fontSizeSlider?.addEventListener('input', (e) => { currentFontSize = parseInt(e.target.value); updateFontSize(); });
-    fontSelect?.addEventListener('change', (e) => rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value));
+    // Listener do slider (só afeta o modo padrão)
+    fontSizeSlider?.addEventListener('input', (e) => {
+        if (!document.body.classList.contains('modo-acessivel')) {
+            currentFontSize = parseInt(e.target.value);
+            updateFontSize();
+        }
+    });
+    // ==========================================================================
+
+    // === Outros Controles de Exibição (Fonte, Tema, Layout) ===
+    fontSelect?.addEventListener('change', (e) => {
+        // Só aplica no modo padrão
+        if (!document.body.classList.contains('modo-acessivel')) {
+            rendicao.themes.font(e.target.value === "Original" ? "Times New Roman" : e.target.value);
+        }
+    });
 
     themeRadios.forEach(radio => radio.addEventListener('click', () => {
         currentTheme = radio.value;
         applyUiTheme(currentTheme);
-        rendicao.getContents().forEach(c => applyContentTheme(c));
+        // Aplica o tema ao conteúdo (seja iframe ou div acessível)
+        if (!document.body.classList.contains('modo-acessivel')) {
+            rendicao.getContents().forEach(c => applyContentTheme(c));
+        } else {
+            // No modo acessível, precisamos aplicar diretamente (pode precisar ajustar)
+            console.warn("Aplicação de tema no modo acessível ainda precisa ser implementada diretamente no #leitor-acessivel se necessário.");
+        }
+        anunciar(`Tema alterado para ${currentTheme}`);
     }));
 
-    layoutRadios.forEach(radio => radio.addEventListener('click', () => rendicao.spread(radio.value)));
+    layoutRadios.forEach(radio => radio.addEventListener('click', () => {
+        // Só aplica no modo padrão
+        if (!document.body.classList.contains('modo-acessivel')) {
+            rendicao.spread(radio.value);
+        }
+    }));
 
+    // === Lógica do Lightbox ===
     closeLightboxBtn?.addEventListener('click', closeLightbox);
     imageLightbox?.addEventListener('click', (e) => { if (e.target === imageLightbox) closeLightbox(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && imageLightbox.style.display === 'flex') closeLightbox(); });
 
+    // === Inicialização Final ===
     if(sumarioContainer) gerarSumario(sumarioContainer, false);
-    setupGlobalFocusManagement();
+    // A chamada setupGlobalFocusManagement foi movida para leitor.js
 }
 
 // ==========================================================================

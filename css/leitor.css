@@ -110,7 +110,6 @@ body.sidebar-collapsed #btn-show-sidebar {
     background-color: #C7C7C7;
 }
 
-
 /* ==========================================================================
    Componentes da Sidebar (Sumário e Rodapé do Sumário)
    ========================================================================== */
@@ -990,4 +989,202 @@ body.modo-acessivel {
     background-color: #ffda00;
     color: #000000;
     font-weight: bold;
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #007AFF;
+    color: white;
+    padding: 8px;
+    z-index: 9999;
+    text-decoration: none;
+    font-weight: bold;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Adicionar ao final de leitor.css */
+
+/* Estilos para os resultados da busca quando são botões */
+.note-item.search-result {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #D1D1D1;
+    padding: 15px 5px;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.note-item.search-result:last-child {
+    border-bottom: none;
+}
+
+.note-item.search-result:hover,
+.note-item.search-result:focus {
+    background-color: #E8E8E8;
+    outline: 2px solid #007AFF;
+    outline-offset: -2px;
+}
+
+.note-item.search-result mark {
+    background-color: #ffda00;
+    color: #000;
+}
+body.modo-acessivel #fixed-context-menu .menu-tools button {
+    display: none;
+}
+
+body.modo-acessivel #fixed-context-menu .menu-tools #fixed-increase-font-btn,
+body.modo-acessivel #fixed-context-menu .menu-tools #fixed-decrease-font-btn,
+body.modo-acessivel #fixed-context-menu .menu-tools #fixed-contrast-btn {
+    display: block;
+}
+
+body.modo-acessivel #fixed-context-menu #btn-toggle-fixed-menu {
+    display: block;
+}
+
+body.high-contrast-mode {
+    background-color: #000000 !important;
+    color: #FFFF00 !important; /* Amarelo */
+}
+
+/* Interface Principal */
+body.high-contrast-mode header,
+body.high-contrast-mode aside,
+body.high-contrast-mode footer,
+body.high-contrast-mode .sidebar-completa,
+body.high-contrast-mode .titulo,
+body.high-contrast-mode .progresso,
+body.high-contrast-mode .toc-footer,
+body.high-contrast-mode #search-bar,
+body.high-contrast-mode #search-nav-controls,
+body.high-contrast-mode #fixed-context-menu,
+body.high-contrast-mode .menu-modal-content,
+body.high-contrast-mode .menu-header,
+body.high-contrast-mode .menu-tabs,
+body.high-contrast-mode #btn-show-sidebar,
+body.high-contrast-mode .modal-content /* Modal inicial */ {
+    background-color: #000000 !important;
+    color: #FFFF00 !important;
+    border-color: #FFFF00 !important;
+}
+
+/* Texto e Links */
+body.high-contrast-mode p,
+body.high-contrast-mode span,
+body.high-contrast-mode li,
+body.high-contrast-mode h1,
+body.high-contrast-mode h2,
+body.high-contrast-mode h3,
+body.high-contrast-mode h4,
+body.high-contrast-mode h5,
+body.high-contrast-mode h6,
+body.high-contrast-mode label,
+body.high-contrast-mode legend,
+body.high-contrast-mode blockquote {
+    color: #FFFF00 !important;
+}
+
+body.high-contrast-mode a,
+body.high-contrast-mode .note-item .note-comment {
+    color: #00FFFF !important; /* Ciano para links/destaques */
+    text-decoration: underline !important;
+}
+
+/* Botões e Controles */
+body.high-contrast-mode button,
+body.high-contrast-mode select,
+body.high-contrast-mode input[type="radio"],
+body.high-contrast-mode input[type="checkbox"],
+body.high-contrast-mode input[type="range"] {
+    background-color: #000000 !important;
+    color: #FFFF00 !important;
+    border: 1px solid #FFFF00 !important;
+}
+body.high-contrast-mode button:hover,
+body.high-contrast-mode button:focus {
+    background-color: #333300 !important;
+    outline: 2px solid #00FFFF !important;
+}
+body.high-contrast-mode button:disabled {
+    opacity: 0.6 !important;
+    border-color: #888800 !important;
+    color: #888800 !important;
+}
+body.high-contrast-mode select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 1em;
+}
+
+body.high-contrast-mode button img {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(30deg);
+}
+
+body.high-contrast-mode #leitor iframe body,
+body.high-contrast-mode #leitor-acessivel {
+    background-color: #000000 !important;
+    color: #FFFF00 !important;
+}
+body.high-contrast-mode #leitor iframe p,
+body.high-contrast-mode #leitor iframe span,
+body.high-contrast-mode #leitor iframe li,
+body.high-contrast-mode #leitor iframe h1,
+body.high-contrast-mode #leitor iframe h2,
+body.high-contrast-mode #leitor iframe h3,
+body.high-contrast-mode #leitor iframe h4,
+body.high-contrast-mode #leitor iframe h5,
+body.high-contrast-mode #leitor iframe h6,
+body.high-contrast-mode #leitor-acessivel p,
+body.high-contrast-mode #leitor-acessivel span,
+body.high-contrast-mode #leitor-acessivel li,
+body.high-contrast-mode #leitor-acessivel h1,
+body.high-contrast-mode #leitor-acessivel h2,
+body.high-contrast-mode #leitor-acessivel h3,
+body.high-contrast-mode #leitor-acessivel h4,
+body.high-contrast-mode #leitor-acessivel h5,
+body.high-contrast-mode #leitor-acessivel h6 {
+    color: #FFFF00 !important;
+}
+body.high-contrast-mode #leitor iframe a,
+body.high-contrast-mode #leitor-acessivel a {
+    color: #00FFFF !important; /* Ciano para links */
+    text-decoration: underline !important;
+}
+
+body.high-contrast-mode * {
+    background-image: none !important;
+}
+
+body.high-contrast-mode #sumario-container ul {
+    background-color: #000000 !important; /* Força fundo preto */
+}
+body.high-contrast-mode #sumario-container li {
+    color: #FFFF00 !important; /* Garante que o texto dos itens fique amarelo */
+}
+
+/* Correção para elementos DIV DENTRO do conteúdo do livro */
+body.high-contrast-mode #leitor iframe div,
+body.high-contrast-mode #leitor-acessivel div {
+    color: #FFFF00 !important; /* Garante texto amarelo */
+    background-color: transparent !important; /* Tenta remover fundos cinzas */
+}
+
+/* Garante que texto dentro de DIVs também fique amarelo */
+body.high-contrast-mode #leitor iframe div *,
+body.high-contrast-mode #leitor-acessivel div * {
+    color: inherit !important; /* Herda a cor amarela do pai */
+    background-color: transparent !important;
 }

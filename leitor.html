@@ -9,8 +9,9 @@
 </head>
 
 <body>
+<a href="#leitor-container" class="skip-link">Pular para o Conteúdo Principal</a>
 <div id="acessibilidade-modal" class="modal-overlay">
-    <div class="modal-content" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <div class="modal-content" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-desc" tabindex="-1">
         <h2 id="modal-title">Modo de Leitura</h2>
         <p id="modal-desc">Para uma melhor experiência com leitores de tela, recomendamos o "Modo Acessível".</p>
         <div class="modal-actions">
@@ -47,6 +48,9 @@
         </button>
         <button id="fixed-decrease-font-btn" title="Diminuir fonte" aria-label="Diminuir tamanho da fonte">
             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNMzAwLTI0MHEtNTEgMC04MS0yNy41VDE4OS0zNDBxMC00NCAzNC41LTcyLjVUMzEyLTQ0MXEyMyAwIDQ1IDR0MzggMTF2LTEycTAtMjktMjAuNS00N1QzMjAtNTAzcS0yMyAwLTQyIDkuNVQyNDUtNDY2bC00Ny0zNXEyNC0yOSA1NC41LTQzdDY4LjUtMTRxNjkgMCAxMDMgMzIuNXQzNCA5Ny41djE3OGgtNjN2LTM3aC00cS0xNCAyMy0zOCAzNXQtNTMgMTJabTEyLTU0cTM1IDAgNTkuNS0yNHQyNC41LTU2cS0xNC04LTMzLjUtMTIuNVQzMjQtMzkxcS0zMiAwLTUwIDE0dC0xOCAzN3EwIDIwIDE2IDMzdDQwIDEzWm0zODggNTRMNTQwLTQwMGw1Ni01NiA2NCA2NHYtMjQ4aDgwdjI0OGw2NC02NCA1NiA1Ni0xNjAgMTYwWiIvPjwvc3ZnPg==">
+        </button>
+        <button id="fixed-contrast-btn" title="Alternar Alto Contraste" aria-label="Alternar modo de alto contraste">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAtOTYwIDk2MCA5NjAiIHdpZHRoPSIyNHB4IiBmaWxsPSIjNUI1QjVCIj48cGF0aCBkPSJNNDgwLTgwcS04MyAwLTE1Ni0zMS41VDE5Ny0xOTdxLTU0LTU0LTg1LjUtMTI3VDgwLTQ4MHEwLTgzIDMxLjUtMTU2VDE5Ny03NjNxNTQtNTQgMTI3LTg1LjVUNDgwLTg4MHE4MyAwIDE1NiAzMS41VDc2My03NjNxNTQgNTQgODUuNSAxMjdUODgwLTQ4MHEwIDgzLTMxLjUgMTU2VDc2My0xOTdxLTU0IDU0LTEyNyA4NS41VDQ4MC04MFptNDAtODNxMTE5LTE1IDE5OS41LTEwNC41VDgwMC00ODBxMC0xMjMtODAuNS0yMTIuNVQ1MjAtNzk3djYzNFoiLz48L3N2Zz4=" alt="Alto Contraste">
         </button>
     </div>
 </div>
@@ -114,9 +118,11 @@
         </div>
     </div>
 </aside>
-<main class="leitor" role="main">
+<main class="leitor" role="main" id="leitor-container">
     <div id="leitor"></div>
-
+    <span id="leitor-acessivel-desc" class="visually-hidden">
+        Use as setas Cima e Baixo para navegar pelo texto e Esquerda e Direita para mudar de seção.
+    </span>
     <div id="leitor-acessivel" role="article"></div>
 </main>
 <footer class="progresso">
@@ -203,12 +209,6 @@
                             </label>
                         </div>
                     </fieldset>
-                </div>
-                <div class="setting-group">
-                    <label>Modo de Leitura</label>
-                    <div>
-                        <button id="btn-kindle-exibicao" class="kindle-button">Enviar para o Kindle</button>
-                    </div>
                 </div>
             </div>
             <div class="menu-panel" id="panel-notas" role="tabpanel" aria-labelledby="tab-notas">
