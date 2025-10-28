@@ -202,7 +202,7 @@ export function atualizarInfoLivro(metadata) {
     const { title, creator, pubdate } = metadata;
     let infoHtml = `<p class="book-title">${title || 'Título desconhecido'}</p>`;
     if (creator) infoHtml += `<p class="book-author">Por: ${creator}</p>`;
-    if (pubdate) infoHtml += `<p class="book-publisher">Publicado em: ${new Date(pubdate).getFullYear()}</p>`;
+    if (pubdate) infoHtml += `<p class="book-publisher">Publicado em: ${new Date(pubdate).getDate()}/${new Date(pubdate).getMonth() + 1}/${new Date(pubdate).getFullYear()}</p>`;
     if(infoLivEl) infoLivEl.innerHTML = infoHtml;
 }
 
