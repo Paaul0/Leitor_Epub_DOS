@@ -1,0 +1,162 @@
+/* ==========================================================================
+   Layout Principal e Sidebar
+   ========================================================================== */
+body {
+    display: grid;
+    grid-template-areas:
+        "sidebar header"
+        "sidebar main"
+        "sidebar footer";
+    grid-template-columns: 288px 1fr;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    margin: 0;
+    font-family: sans-serif;
+    transition: grid-template-columns 0.4s ease;
+}
+
+body.sidebar-collapsed {
+    grid-template-columns: 0px 1fr;
+}
+
+body.sidebar-collapsed .sidebar-completa {
+    visibility: hidden;
+    overflow: hidden;
+    padding: 0;
+    border-right: none;
+}
+
+.sidebar-completa {
+    grid-area: sidebar;
+    background-color: #F2F2F2;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.infos {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    height: auto;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+.home {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.conf {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.info_liv {
+    width: 100%;
+    height: auto;
+    padding-top: 3%;
+    padding-left: 4%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.info_liv p {
+    margin: 0 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info_liv .book-title {
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.info_liv .book-author,
+.info_liv .book-publisher {
+    font-size: 0.9em;
+    color: #555;
+}
+
+/* ==========================================================================
+   Header (Título) e Footer (Progresso)
+   ========================================================================== */
+
+.titulo {
+    grid-area: header;
+    height: 27px;
+    padding: 0 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f2f2f2;
+}
+
+.titulo p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.progresso {
+    grid-area: footer;
+    border-top: 1px solid #ccc;
+    padding: 5px;
+}
+
+/* ==========================================================================
+   Área Principal do Leitor
+   ========================================================================== */
+
+.leitor {
+    grid-area: main;
+    overflow: hidden;
+}
+
+#leitor {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#leitor-acessivel {
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2% 5%;
+    transition: opacity 0.15s ease-in-out;
+}
+
+#leitor-acessivel.transitioning {
+    opacity: 0;
+}
+
+#leitor-acessivel::-webkit-scrollbar {
+    display: none;
+}
+
+#leitor-acessivel img {
+    max-height: 90%;
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
